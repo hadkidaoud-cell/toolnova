@@ -1,0 +1,60 @@
+{
+  "name": "toolnova",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "description": "Every Tool. One Place.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.11.0",
+    "pnpm": ">=9.15.0"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "start": "turbo start",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint -- --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "test:watch": "turbo test -- --watch",
+    "test:e2e": "turbo test:e2e",
+    "clean": "turbo clean && rm -rf node_modules",
+    "clean:build": "turbo clean",
+    "prepare": "husky",
+    "db:generate": "turbo db:generate",
+    "db:push": "turbo db:push",
+    "db:migrate": "turbo db:migrate",
+    "db:seed": "turbo db:seed",
+    "db:studio": "turbo db:studio"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.11",
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@types/node": "^22.10.0",
+    "eslint": "^9.18.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.9",
+    "turbo": "^2.4.2",
+    "typescript": "^5.7.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix --max-warnings=0",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  }
+}
