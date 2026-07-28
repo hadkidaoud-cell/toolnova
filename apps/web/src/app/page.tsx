@@ -7,12 +7,12 @@ export const metadata: Metadata = {
 };
 
 const PLACEHOLDER_TOOLS = [
-  { id: "1", name: "Word Counter", description: "Count words, characters, and sentences in your text", category: "Text", icon: "T" },
-  { id: "2", name: "JSON Formatter", description: "Format and validate JSON data instantly", category: "Developer", icon: "{ }" },
-  { id: "3", name: "Image Compressor", description: "Reduce image file size without losing quality", category: "Image", icon: "🖼" },
-  { id: "4", name: "UUID Generator", description: "Generate unique UUIDs for your applications", category: "Generator", icon: "#" },
-  { id: "5", name: "Password Generator", description: "Create strong, secure passwords instantly", category: "Security", icon: "🔒" },
-  { id: "6", name: "Color Picker", description: "Pick and convert colors between formats", category: "Design", icon: "🎨" },
+  { id: "qr-code-generator", name: "QR Code Generator", description: "Generate custom QR codes with colors and download as PNG or SVG", category: "Generator", icon: "📱" },
+  { id: "image-compressor", name: "Image Compressor", description: "Reduce image file size without losing quality", category: "Image", icon: "🖼" },
+  { id: "pdf-merger", name: "PDF Merger", description: "Merge multiple PDF files into one document", category: "Document", icon: "📄" },
+  { id: "resume-builder", name: "Resume Builder", description: "Create professional resumes with multiple templates", category: "Document", icon: "📝" },
+  { id: "word-counter", name: "Word Counter", description: "Count words, characters, and sentences in your text", category: "Text", icon: "🔢" },
+  { id: "json-formatter", name: "JSON Formatter", description: "Format and validate JSON data instantly", category: "Developer", icon: "{ }" },
 ];
 
 const PLACEHOLDER_CATEGORIES = [

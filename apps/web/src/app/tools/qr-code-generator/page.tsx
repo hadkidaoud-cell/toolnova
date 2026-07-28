@@ -1,420 +1,528 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { encode, renderSVG, svgToDataUrl, downloadFile, addToHistory, getDownloadHistory, removeFromHistory, clearHistory, formatTimestamp } from "@toolnova/core/src/tools/qr-code-generator";
-import type { ECLevel, QRConfig, QRMatrix } from "@toolnova/core/src/tools/qr-code-generator";
-import type { DownloadHistoryEntry } from "@toolnova/core/src/tools/qr-code-generator";
 
-const EC_OPTIONS: { value: ECLevel; label: string; desc: string }[] = [
-  { value: "L", label: "Low", desc: "7% recovery" },
-  { value: "M", label: "Medium", desc: "15% recovery" },
-  { value: "Q", label: "Quartile", desc: "25% recovery" },
-  { value: "H", label: "High", desc: "30% recovery" },
-];
+const EC_LEVELS = { L: 1, M: 0, Q: 3, H: 2 } as const;
+type ECLevel = keyof typeof EC_LEVELS;
 
-const PRESET_COLORS = [
+const GF256 = (() => {
+  const EXP = new Uint8Array(512);
+  const LOG = new Uint8Array(256);
+  let v = 1;
+  for (let i = 0; i < 255; i++) {
+    EXP[i] = v;
+    LOG[v] = i;
+    v = (v << 1) ^ (v & 128 ? 0x11d : 0);
+  }
+  for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+  return {
+    exp: (a: number) => EXP[a],
+    log: (a: number) => LOG[a],
+    mul: (a: number, b: number) => (a === 0 || b === 0 ? 0 : EXP[LOG[a] + LOG[b]]),
+  };
+})();
+
+function reedSolomon(numEc: number, data: Uint8Array): Uint8Array {
+  const gen = new Uint8Array(numEc + 1);
+  gen[0] = 1;
+  for (let i = 0; i < numEc; i++) {
+    for (let j = numEc; j >= 1; j--) gen[j] = gen[j - 1] ^ GF256.mul(gen[j], GF256.exp(i));
+  }
+  const msg = new Uint8Array(data.length + numEc);
+  msg.set(data);
+  for (let i = 0; i < data.length; i++) {
+    const coeff = msg[i];
+    if (coeff !== 0) {
+      for (let j = 1; j <= numEc; j++) msg[i + j] ^= GF256.mul(gen[j], coeff);
+    }
+  }
+  return msg.slice(data.length);
+}
+
+const VERSION_INFO: [number, number, number][] = [];
+const EC_COUNTS: Record<number, [number, number, number, number]> = {
+  1:[7,10,13,17],2:[10,16,22,28],3:[15,26,18,22],4:[20,18,26,16],
+  5:[26,24,18,22],6:[18,16,24,28],7:[20,18,18,26],8:[24,22,22,26],
+  9:[30,22,20,24],10:[18,26,24,28],11:[20,30,28,24],12:[24,22,26,28],
+  13:[26,22,24,22],14:[30,24,20,24],15:[22,24,30,24],16:[24,28,24,30],
+  17:[28,28,28,28],18:[30,26,28,28],19:[28,26,26,26],20:[28,26,28,28],
+  21:[28,26,30,28],22:[28,28,30,30],23:[30,28,30,30],24:[30,28,30,30],
+  26:[30,28,30,30],27:[30,28,30,30],28:[30,28,30,30],29:[30,28,30,30],30:[30,28,30,30],
+  25:[30,28,30,30],
+  31:[30,28,30,30],32:[30,28,30,30],33:[30,28,30,30],34:[30,28,30,30],35:[30,28,30,30],
+  36:[30,28,30,30],37:[30,28,30,30],38:[30,28,30,30],39:[30,28,30,30],40:[30,28,30,30],
+};
+
+function getVersion(dataLen: number): number {
+  for (let v = 1; v <= 40; v++) {
+    const cap = v <= 9 ? 17 : v <= 26 ? 14 : 11;
+    if (dataLen <= cap * v * v / 100) return v;
+  }
+  return 40;
+}
+
+function getModuleCount(version: number): number {
+  return version * 4 + 17;
+}
+
+function encodeQR(text: string, ecLevel: ECLevel): boolean[][] {
+  const bytes = new TextEncoder().encode(text);
+  const version = Math.max(1, Math.min(40, getVersion(bytes.length + 2)));
+  const size = getModuleCount(version);
+  const modules: boolean[][] = Array.from({ length: size }, () => Array(size).fill(false) as boolean[]);
+  const reserved: boolean[][] = Array.from({ length: size }, () => Array(size).fill(false) as boolean[]);
+
+  function placeFinderPattern(row: number, col: number) {
+    for (let r = -1; r <= 7; r++) {
+      for (let c = -1; c <= 7; c++) {
+        const y = row + r, x = col + c;
+        if (y < 0 || y >= size || x < 0 || x >= size) continue;
+        const inBorder = r === -1 || r === 7 || c === -1 || c === 7;
+        const inPattern = r >= 0 && r <= 6 && c >= 0 && c <= 6;
+        const inHole = r >= 2 && r <= 4 && c >= 2 && c <= 4;
+        modules[y][x] = inBorder || (inPattern && !inHole);
+        reserved[y][x] = true;
+      }
+    }
+  }
+
+  placeFinderPattern(0, 0);
+  placeFinderPattern(0, size - 7);
+  placeFinderPattern(size - 7, 0);
+
+  for (let i = 8; i < size - 8; i++) {
+    modules[6][i] = i % 2 === 0;
+    modules[i][6] = i % 2 === 0;
+    reserved[6][i] = true;
+    reserved[i][6] = true;
+  }
+
+  reserved[8][8] = true;
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 6; c++) {
+      modules[r + 1][size - 8 + c] = (r + c) % 2 === 0;
+      modules[size - 8 + r][c + 1] = (r + c) % 2 === 0;
+      reserved[r + 1][size - 8 + c] = true;
+      reserved[size - 8 + r][c + 1] = true;
+    }
+  }
+
+  if (version >= 7) {
+    for (let i = 0; i < 6; i++) {
+      for (let j = 0; j < 3; j++) {
+        modules[i][size - 11 + j] = i === 1 || i === 4;
+        modules[size - 11 + j][i] = i === 1 || i === 4;
+        reserved[i][size - 11 + j] = true;
+        reserved[size - 11 + j][i] = true;
+      }
+    }
+  }
+
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (!reserved[r][c] && (r + c) % 2 === 0) {
+        reserved[r][c] = true;
+      }
+    }
+  }
+
+  const ecIdx = EC_LEVELS[ecLevel];
+  const ecPerBlock = EC_COUNTS[version]?.[ecIdx] ?? 10;
+
+  let totalCodewords = 0;
+  if (version <= 9) totalCodewords = [26,44,70,100,134,172,196,242,292][version - 1] || 292;
+  else if (version <= 26) totalCodewords = [352,408,468,552,588,644,700,750,808,870,938,1006,1094,1174,1276,1370,1468,1531,1631,1735,1843][version - 10] || 1843;
+  else totalCodewords = [1955,2071,2191,2306,2434,2566,2702,2812,2956][version - 27] || 2956;
+
+  const totalDataBits = totalCodewords * 8;
+  const totalEcBits = ecPerBlock * 8;
+  const dataBits = totalDataBits - Math.ceil(totalDataBits / (8)) * 0;
+
+  const modeBits = 4;
+  const countBits = version <= 9 ? 8 : 16;
+  const availableBits = totalDataBits;
+  const dataBytes = Math.floor((availableBits - modeBits - countBits) / 8);
+
+  const data = new Uint8Array(dataBytes + 2);
+  data[0] = 0x40 | (bytes.length >> (countBits === 8 ? 0 : 8));
+  data[1] = bytes.length & 0xff;
+  if (countBits === 16) {
+    data[0] = 0x40 | (bytes.length >> 8);
+    data[1] = bytes.length & 0xff;
+  } else {
+    data[0] = 0x40 | bytes.length;
+  }
+  let offset = Math.ceil((modeBits + countBits) / 8);
+  for (let i = 0; i < Math.min(bytes.length, dataBytes - offset); i++) {
+    data[offset + i] = bytes[i];
+  }
+  if (dataBytes - offset - bytes.length >= 2) {
+    data[offset + bytes.length] = 0xec;
+    if (dataBytes - offset - bytes.length > 1) data[offset + bytes.length + 1] = 0x11;
+  }
+
+  const rawData = data.slice(0, dataBytes);
+
+  const numBlocks = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1][version - 1] || 1;
+  const blockSize = Math.floor(dataBytes / numBlocks);
+  const longBlocks = dataBytes % numBlocks;
+  const ecPer = ecPerBlock;
+
+  const allCodewords: number[] = [];
+  let dataIdx = 0;
+
+  const blocks: Uint8Array[] = [];
+  const ecBlocks: Uint8Array[] = [];
+
+  for (let b = 0; b < numBlocks; b++) {
+    const sz = blockSize + (b >= numBlocks - longBlocks ? 1 : 0);
+    const block = rawData.slice(dataIdx, dataIdx + sz);
+    dataIdx += sz;
+    blocks.push(block);
+    ecBlocks.push(reedSolomon(ecPer, block));
+  }
+
+  for (let i = 0; i < blockSize + 1; i++) {
+    for (let b = 0; b < numBlocks; b++) {
+      if (i < blocks[b].length) allCodewords.push(blocks[b][i]);
+    }
+  }
+  for (let i = 0; i < ecPer; i++) {
+    for (let b = 0; b < numBlocks; b++) {
+      allCodewords.push(ecBlocks[b][i]);
+    }
+  }
+
+  const bits: number[] = [];
+  for (const byte of allCodewords) {
+    for (let i = 7; i >= 0; i--) bits.push((byte >> i) & 1);
+  }
+
+  const dataPositions: [number, number][] = [];
+  for (let col = size - 1; col >= 0; col -= 2) {
+    if (col === 6) col = 5;
+    for (let dir = 0; dir < 2; dir++) {
+      const row = dir === 0 ? size - 1 : 0;
+      const step = dir === 0 ? -1 : 1;
+      for (let r = row; ; r += step) {
+        if (r < 0 || r >= size) break;
+        if (!reserved[r][col]) dataPositions.push([r, col]);
+        if (col > 0 && !reserved[r][col - 1]) dataPositions.push([r, col - 1]);
+        break;
+      }
+    }
+  }
+
+  const finalPositions: [number, number][] = [];
+  for (let col = size - 1; col >= 0; col -= 2) {
+    if (col === 6) col = 5;
+    for (let upward = 0; upward < 2; upward++) {
+      for (let i = 0; i < size; i++) {
+        const row = upward === 0 ? size - 1 - i : i;
+        if (row < 0 || row >= size) continue;
+        if (reserved[row][col]) continue;
+        finalPositions.push([row, col]);
+        if (col > 0 && !reserved[row][col - 1]) {
+          finalPositions.push([row, col - 1]);
+        }
+      }
+    }
+  }
+
+  const seen = new Set<string>();
+  const uniquePos: [number, number][] = [];
+  for (const [r, c] of finalPositions) {
+    const key = `${r},${c}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniquePos.push([r, c]);
+    }
+  }
+
+  for (let i = 0; i < Math.min(bits.length, uniquePos.length); i++) {
+    const [r, c] = uniquePos[i];
+    modules[r][c] = bits[i] === 1;
+  }
+
+  let mask = 0;
+  let bestScore = Infinity;
+  for (let m = 0; m < 8; m++) {
+    let penalty = 0;
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        if (reserved[r][c]) continue;
+        const shouldFlip = (() => {
+          switch (m) {
+            case 0: return (r + c) % 2 === 0;
+            case 1: return r % 2 === 0;
+            case 2: return c % 3 === 0;
+            case 3: return (r + c) % 3 === 0;
+            case 4: return (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0;
+            case 5: return (r * c) % 2 + (r * c) % 3 === 0;
+            case 6: return ((r * c) % 2 + (r * c) % 3) % 2 === 0;
+            case 7: return ((r + c) % 2 + (r * c) % 3) % 2 === 0;
+          }
+        })();
+        if (shouldFlip) penalty++;
+      }
+    }
+    if (penalty < bestScore) {
+      bestScore = penalty;
+      mask = m;
+    }
+  }
+
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      if (reserved[r][c]) continue;
+      let flip = false;
+      switch (mask) {
+        case 0: flip = (r + c) % 2 === 0; break;
+        case 1: flip = r % 2 === 0; break;
+        case 2: flip = c % 3 === 0; break;
+        case 3: flip = (r + c) % 3 === 0; break;
+        case 4: flip = (Math.floor(r / 2) + Math.floor(c / 3)) % 2 === 0; break;
+        case 5: flip = (r * c) % 2 + (r * c) % 3 === 0; break;
+        case 6: flip = ((r * c) % 2 + (r * c) % 3) % 2 === 0; break;
+        case 7: flip = ((r + c) % 2 + (r * c) % 3) % 2 === 0; break;
+      }
+      if (flip) modules[r][c] = !modules[r][c];
+    }
+  }
+
+  const formatBits = (ecIdx << 3) | mask;
+  let format = formatBits;
+  for (let i = 0; i < 10; i++) format = (format << 1) ^ ((format >> 9) * 0x537);
+  format ^= 0x5412;
+  format = (format << 10) | formatBits;
+  format &= 0x7fff;
+
+  const formatMask = 0x5412;
+  const finalFormat = format ^ formatMask;
+
+  for (let i = 0; i < 15; i++) {
+    const bit = (finalFormat >> i) & 1;
+    const pos1 = [0, 1, 2, 3, 4, 5, 7, 8, size - 8, size - 7, size - 6, size - 5, size - 4, size - 3, size - 2];
+    const pos2 = [size - 1 - i, size - 1 - (i < 6 ? i : i + 1)];
+    if (i < 8) {
+      modules[8][size - 1 - i] = bit === 1;
+      if (i < 6) modules[i][8] = bit === 1;
+    } else {
+      modules[size - 15 + i][8] = bit === 1;
+      modules[8][14 - i] = bit === 1;
+    }
+  }
+
+  for (let i = 0; i < 8; i++) {
+    const bit = (finalFormat >> (14 - i)) & 1;
+    if (i < 6) modules[8][i] = bit === 1;
+    modules[8][7] = true;
+    modules[8][8] = true;
+    if (i < 8) modules[size - 1 - i][8] = bit === 1;
+  }
+
+  modules[size - 8][8] = true;
+
+  return modules;
+}
+
+function renderSVG(modules: boolean[][], size: number = 300, fg: string = "#000000", bg: string = "#ffffff", margin: number = 4): string {
+  const count = modules.length;
+  const cellSize = (size - margin * 2) / count;
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${count + margin * 2} ${count + margin * 2}" width="${size}" height="${size}">`;
+  svg += `<rect width="${count + margin * 2}" height="${count + margin * 2}" fill="${bg}"/>`;
+  for (let r = 0; r < count; r++) {
+    for (let c = 0; c < count; c++) {
+      if (modules[r][c]) {
+        svg += `<rect x="${c + margin}" y="${r + margin}" width="1" height="1" fill="${fg}"/>`;
+      }
+    }
+  }
+  svg += "</svg>";
+  return svg;
+}
+
+const PRESETS = [
   { fg: "#000000", bg: "#ffffff", name: "Classic" },
-  { fg: "#1a1a2e", bg: "#eef2f7", name: "Slate" },
   { fg: "#0d6efd", bg: "#ffffff", name: "Blue" },
   { fg: "#198754", bg: "#ffffff", name: "Green" },
   { fg: "#dc3545", bg: "#ffffff", name: "Red" },
   { fg: "#6f42c1", bg: "#ffffff", name: "Purple" },
-  { fg: "#fd7e14", bg: "#ffffff", name: "Orange" },
-  { fg: "#20c997", bg: "#ffffff", name: "Teal" },
-  { fg: "#000000", bg: "#ffd700", name: "Gold" },
   { fg: "#ffffff", bg: "#000000", name: "Inverted" },
+  { fg: "#000000", bg: "#ffd700", name: "Gold" },
+  { fg: "#20c997", bg: "#ffffff", name: "Teal" },
 ];
-
-interface Toast {
-  message: string;
-  type: "success" | "error" | "info";
-}
 
 export default function QRCodeGeneratorPage() {
   const [text, setText] = useState("https://toolnova.com");
   const [ecLevel, setEcLevel] = useState<ECLevel>("M");
+  const [fg, setFg] = useState("#000000");
+  const [bg, setBg] = useState("#ffffff");
+  const [modules, setModules] = useState<boolean[][] | null>(null);
+  const [error, setError] = useState("");
   const [size, setSize] = useState(300);
-  const [margin, setMargin] = useState(4);
-  const [foreground, setForeground] = useState("#000000");
-  const [background, setBackground] = useState("#ffffff");
-  const [logoSize, setLogoSize] = useState(0);
-  const [logoDataUrl, setLogoDataUrl] = useState<string | undefined>(undefined);
-  const [matrix, setMatrix] = useState<QRMatrix | null>(null);
-  const [svgOutput, setSvgOutput] = useState("");
-  const [history, setHistory] = useState<DownloadHistoryEntry[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
-  const [toast, setToast] = useState<Toast | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const config: QRConfig = { text, ecLevel, size, margin, foreground, background, logoSize, logoDataUrl };
 
   const generate = useCallback(() => {
     try {
-      setError(null);
-      if (!text.trim()) {
-        setError("Enter text or URL to generate QR code");
-        return;
-      }
-      const m = encode(text, ecLevel);
-      setMatrix(m);
-      setSvgOutput(renderSVG(m, config));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate QR code");
-      setMatrix(null);
+      setError("");
+      if (!text.trim()) { setError("Enter text or URL"); return; }
+      const m = encodeQR(text, ecLevel);
+      setModules(m);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to generate");
+      setModules(null);
     }
-  }, [text, ecLevel, size, margin, foreground, background, logoSize, logoDataUrl]);
+  }, [text, ecLevel]);
 
   useEffect(() => { generate(); }, [generate]);
 
-  useEffect(() => { setHistory(getDownloadHistory()); }, []);
+  const svgOutput = modules ? renderSVG(modules, size, fg, bg) : "";
 
-  const showToast = (message: string, type: Toast["type"] = "info") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const handleDownloadPNG = useCallback(() => {
-    if (!matrix) return;
+  const downloadPNG = () => {
+    if (!modules) return;
+    const count = modules.length;
     const canvas = document.createElement("canvas");
-    const moduleCount = matrix.size;
-    const totalModules = moduleCount + margin * 2;
-    const moduleSize = Math.max(1, Math.floor(size / totalModules));
-    canvas.width = totalModules * moduleSize;
-    canvas.height = totalModules * moduleSize;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.fillStyle = background;
+    const cellSize = Math.max(1, Math.floor(size / count));
+    canvas.width = count * cellSize;
+    canvas.height = count * cellSize;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = foreground;
-    for (let row = 0; row < moduleCount; row++) {
-      for (let col = 0; col < moduleCount; col++) {
-        if (matrix.modules[row]![col]) {
-          ctx.fillRect((col + margin) * moduleSize, (row + margin) * moduleSize, moduleSize, moduleSize);
-        }
+    ctx.fillStyle = fg;
+    for (let r = 0; r < count; r++) {
+      for (let c = 0; c < count; c++) {
+        if (modules[r][c]) ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
       }
     }
-
     canvas.toBlob((blob) => {
       if (blob) {
         const url = URL.createObjectURL(blob);
-        downloadFile(url, `qr-code-${Date.now()}.png`, "image/png");
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `qr-code-${Date.now()}.png`;
+        a.click();
         URL.revokeObjectURL(url);
-        addToHistory(text, config);
-        setHistory(getDownloadHistory());
-        showToast("PNG downloaded", "success");
       }
     }, "image/png");
-  }, [matrix, size, margin, foreground, background, text, config]);
+  };
 
-  const handleDownloadSVG = useCallback(() => {
+  const downloadSVG = () => {
     if (!svgOutput) return;
-    const dataUrl = svgToDataUrl(svgOutput);
-    downloadFile(dataUrl, `qr-code-${Date.now()}.svg`, "image/svg+xml");
-    addToHistory(text, config);
-    setHistory(getDownloadHistory());
-    showToast("SVG downloaded", "success");
-  }, [svgOutput, text, config]);
-
-  const handleCopy = useCallback(async () => {
-    if (!svgOutput) return;
-    try {
-      const blob = new Blob([svgOutput], { type: "image/svg+xml" });
-      await navigator.clipboard.write([new ClipboardItem({ "image/svg+xml": blob })]);
-      showToast("Copied to clipboard", "success");
-    } catch {
-      showToast("Copy not supported in this browser", "error");
-    }
-  }, [svgOutput]);
-
-  const handleLogoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      showToast("Logo must be under 2MB", "error");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => setLogoDataUrl(reader.result as string);
-    reader.readAsDataURL(file);
-  }, []);
-
-  const removeLogo = useCallback(() => {
-    setLogoDataUrl(undefined);
-    setLogoSize(0);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }, []);
-
-  const handleHistoryRestore = useCallback((entry: DownloadHistoryEntry) => {
-    setText(entry.text);
-    setEcLevel(entry.config.ecLevel);
-    setSize(entry.config.size);
-    setMargin(entry.config.margin);
-    setForeground(entry.config.foreground);
-    setBackground(entry.config.background);
-    setLogoSize(entry.config.logoSize);
-    setShowHistory(false);
-    showToast("Settings restored", "success");
-  }, []);
-
-  const handleHistoryDelete = useCallback((id: string) => {
-    removeFromHistory(id);
-    setHistory(getDownloadHistory());
-  }, []);
-
-  const handleHistoryClear = useCallback(() => {
-    clearHistory();
-    setHistory([]);
-    showToast("History cleared", "success");
-  }, []);
+    const blob = new Blob([svgOutput], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `qr-code-${Date.now()}.svg`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
-      {toast && (
-        <div style={{
-          position: "fixed", top: 20, right: 20, zIndex: 9999,
-          padding: "12px 24px", borderRadius: 8, color: "#fff", fontWeight: 600, fontSize: 14,
-          background: toast.type === "success" ? "#198754" : toast.type === "error" ? "#dc3545" : "#0d6efd",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-        }}>{toast.message}</div>
-      )}
-
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 16px" }}>
-        <header style={{ marginBottom: 32 }}>
+    <div style={{ minHeight: "100vh", background: "#f8f9fa", padding: "24px 16px" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+        <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 32, fontWeight: 800, color: "#1a1a2e", margin: "0 0 8px" }}>QR Code Generator</h1>
-          <p style={{ fontSize: 16, color: "#6c757d", margin: 0 }}>Generate custom QR codes with colors, logos, and multiple formats</p>
-        </header>
+          <p style={{ fontSize: 16, color: "#6c757d", margin: 0 }}>Generate custom QR codes with colors and download as PNG or SVG</p>
+        </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start" }}>
-          {/* Controls */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #e9ecef" }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 16px", color: "#1a1a2e" }}>Content</h2>
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#495057", marginBottom: 6 }}>Text or URL</label>
-                <textarea
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="https://example.com"
-                  rows={3}
-                  style={{
-                    width: "100%", padding: "10px 12px", border: "1px solid #dee2e6", borderRadius: 8,
-                    fontSize: 14, resize: "vertical", fontFamily: "inherit", boxSizing: "border-box",
-                  }}
-                />
-                <span style={{ fontSize: 12, color: "#adb5bd", marginTop: 4, display: "block" }}>
-                  {text.length} characters
-                </span>
-              </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, alignItems: "start" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e9ecef" }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>Content</h2>
+              <textarea
+                value={text} onChange={(e) => setText(e.target.value)}
+                placeholder="Enter text or URL..." rows={3}
+                style={{ width: "100%", padding: 10, border: "1px solid #dee2e6", borderRadius: 8, fontSize: 14, resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }}
+              />
+              <span style={{ fontSize: 12, color: "#adb5bd" }}>{text.length} chars</span>
             </div>
 
-            <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #e9ecef" }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 16px", color: "#1a1a2e" }}>Error Correction</h2>
+            <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e9ecef" }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>Error Correction</h2>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {EC_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setEcLevel(opt.value)}
-                    style={{
-                      padding: "10px 12px", borderRadius: 8, border: `2px solid ${ecLevel === opt.value ? "#0d6efd" : "#dee2e6"}`,
-                      background: ecLevel === opt.value ? "#e7f1ff" : "#fff", cursor: "pointer", textAlign: "left",
-                    }}
-                  >
-                    <div style={{ fontWeight: 700, fontSize: 14, color: ecLevel === opt.value ? "#0d6efd" : "#1a1a2e" }}>{opt.label}</div>
-                    <div style={{ fontSize: 12, color: "#6c757d" }}>{opt.desc}</div>
+                {(["L", "M", "Q", "H"] as ECLevel[]).map((level) => (
+                  <button key={level} onClick={() => setEcLevel(level)}
+                    style={{ padding: "8px 12px", borderRadius: 8, border: `2px solid ${ecLevel === level ? "#0d6efd" : "#dee2e6"}`, background: ecLevel === level ? "#e7f1ff" : "#fff", cursor: "pointer", textAlign: "left" }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: ecLevel === level ? "#0d6efd" : "#1a1a2e" }}>{level}</div>
+                    <div style={{ fontSize: 11, color: "#6c757d" }}>{level === "L" ? "7%" : level === "M" ? "15%" : level === "Q" ? "25%" : "30%"}</div>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #e9ecef" }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 16px", color: "#1a1a2e" }}>Appearance</h2>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+            <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e9ecef" }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>Colors</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#495057", marginBottom: 6 }}>Size: {size}px</label>
-                  <input type="range" min={100} max={2000} step={50} value={size}
-                    onChange={(e) => setSize(Number(e.target.value))}
-                    style={{ width: "100%" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#495057", marginBottom: 6 }}>Margin: {margin}</label>
-                  <input type="range" min={0} max={10} step={1} value={margin}
-                    onChange={(e) => setMargin(Number(e.target.value))}
-                    style={{ width: "100%" }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#495057", marginBottom: 6 }}>Foreground</label>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <input type="color" value={foreground} onChange={(e) => setForeground(e.target.value)}
-                      style={{ width: 40, height: 36, border: "1px solid #dee2e6", borderRadius: 6, cursor: "pointer", padding: 2 }} />
-                    <input type="text" value={foreground} onChange={(e) => setForeground(e.target.value)}
-                      style={{ flex: 1, padding: "8px 10px", border: "1px solid #dee2e6", borderRadius: 6, fontSize: 13, fontFamily: "monospace" }} />
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#495057", display: "block", marginBottom: 4 }}>Foreground</label>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <input type="color" value={fg} onChange={(e) => setFg(e.target.value)}
+                      style={{ width: 36, height: 32, border: "1px solid #dee2e6", borderRadius: 6, cursor: "pointer", padding: 2 }} />
+                    <input type="text" value={fg} onChange={(e) => setFg(e.target.value)}
+                      style={{ flex: 1, padding: "6px 8px", border: "1px solid #dee2e6", borderRadius: 6, fontSize: 12, fontFamily: "monospace" }} />
                   </div>
                 </div>
                 <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#495057", marginBottom: 6 }}>Background</label>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <input type="color" value={background} onChange={(e) => setBackground(e.target.value)}
-                      style={{ width: 40, height: 36, border: "1px solid #dee2e6", borderRadius: 6, cursor: "pointer", padding: 2 }} />
-                    <input type="text" value={background} onChange={(e) => setBackground(e.target.value)}
-                      style={{ flex: 1, padding: "8px 10px", border: "1px solid #dee2e6", borderRadius: 6, fontSize: 13, fontFamily: "monospace" }} />
+                  <label style={{ fontSize: 12, fontWeight: 600, color: "#495057", display: "block", marginBottom: 4 }}>Background</label>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <input type="color" value={bg} onChange={(e) => setBg(e.target.value)}
+                      style={{ width: 36, height: 32, border: "1px solid #dee2e6", borderRadius: 6, cursor: "pointer", padding: 2 }} />
+                    <input type="text" value={bg} onChange={(e) => setBg(e.target.value)}
+                      style={{ flex: 1, padding: "6px 8px", border: "1px solid #dee2e6", borderRadius: 6, fontSize: 12, fontFamily: "monospace" }} />
                   </div>
                 </div>
               </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#495057", marginBottom: 8 }}>Color Presets</label>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {PRESET_COLORS.map((preset) => (
-                    <button key={preset.name} title={preset.name}
-                      onClick={() => { setForeground(preset.fg); setBackground(preset.bg); }}
-                      style={{
-                        width: 32, height: 32, borderRadius: 6, border: "2px solid #dee2e6", cursor: "pointer",
-                        background: `linear-gradient(135deg, ${preset.fg} 50%, ${preset.bg} 50%)`,
-                      }} />
-                  ))}
-                </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {PRESETS.map((p) => (
+                  <button key={p.name} title={p.name} onClick={() => { setFg(p.fg); setBg(p.bg); }}
+                    style={{ width: 28, height: 28, borderRadius: 6, border: "2px solid #dee2e6", cursor: "pointer", background: `linear-gradient(135deg, ${p.fg} 50%, ${p.bg} 50%)` }} />
+                ))}
               </div>
+            </div>
 
-              <div>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#495057", marginBottom: 6 }}>
-                  Logo Size: {logoSize}%
-                </label>
-                <input type="range" min={0} max={30} step={1} value={logoSize}
-                  onChange={(e) => setLogoSize(Number(e.target.value))}
-                  style={{ width: "100%" }}
-                />
-                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                  <button onClick={() => fileInputRef.current?.click()}
-                    style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #dee2e6", background: "#fff", cursor: "pointer", fontSize: 13 }}>
-                    Upload Logo
-                  </button>
-                  {logoDataUrl && (
-                    <button onClick={removeLogo}
-                      style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #fecaca", background: "#fff5f5", color: "#dc3545", cursor: "pointer", fontSize: 13 }}>
-                      Remove
-                    </button>
-                  )}
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} style={{ display: "none" }} />
-                </div>
-              </div>
+            <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e9ecef" }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>Size: {size}px</h2>
+              <input type="range" min={100} max={800} step={50} value={size}
+                onChange={(e) => setSize(Number(e.target.value))} style={{ width: "100%" }} />
             </div>
           </div>
 
-          {/* Preview & Actions */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 20, position: "sticky", top: 24 }}>
-            <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #e9ecef" }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 16px", color: "#1a1a2e" }}>Preview</h2>
-
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 24 }}>
+            <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e9ecef" }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>Preview</h2>
               {error ? (
-                <div style={{ padding: 24, background: "#fff5f5", borderRadius: 8, color: "#dc3545", fontSize: 14, textAlign: "center" }}>{error}</div>
+                <div style={{ padding: 20, background: "#fff5f5", borderRadius: 8, color: "#dc3545", fontSize: 14, textAlign: "center" }}>{error}</div>
               ) : (
-                <div ref={previewRef} style={{
-                  display: "flex", justifyContent: "center", alignItems: "center",
-                  padding: 24, background: "#f8f9fa", borderRadius: 8, minHeight: 200,
-                }}>
-                  <div dangerouslySetInnerHTML={{ __html: svgOutput }}
-                    style={{ maxWidth: "100%", lineHeight: 0 }} />
+                <div ref={previewRef} style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: 20, background: "#f8f9fa", borderRadius: 8 }}>
+                  <div dangerouslySetInnerHTML={{ __html: svgOutput }} style={{ maxWidth: "100%", lineHeight: 0 }} />
                 </div>
               )}
-
-              {matrix && (
-                <div style={{ marginTop: 12, fontSize: 12, color: "#adb5bd", textAlign: "center" }}>
-                  {matrix.size}x{matrix.size} modules | Version {Math.floor((matrix.size - 17) / 4)} | EC: {ecLevel}
+              {modules && (
+                <div style={{ marginTop: 8, fontSize: 12, color: "#adb5bd", textAlign: "center" }}>
+                  {modules.length}x{modules.length} modules | EC: {ecLevel}
                 </div>
               )}
             </div>
 
-            <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #e9ecef" }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 16px", color: "#1a1a2e" }}>Download</h2>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <button onClick={handleDownloadPNG} disabled={!matrix}
-                  style={{
-                    padding: "12px 16px", borderRadius: 8, border: "none", background: "#0d6efd", color: "#fff",
-                    fontWeight: 600, fontSize: 14, cursor: matrix ? "pointer" : "not-allowed", opacity: matrix ? 1 : 0.5,
-                  }}>PNG</button>
-                <button onClick={handleDownloadSVG} disabled={!matrix}
-                  style={{
-                    padding: "12px 16px", borderRadius: 8, border: "none", background: "#198754", color: "#fff",
-                    fontWeight: 600, fontSize: 14, cursor: matrix ? "pointer" : "not-allowed", opacity: matrix ? 1 : 0.5,
-                  }}>SVG</button>
+            <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e9ecef" }}>
+              <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px" }}>Download</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                <button onClick={downloadPNG} disabled={!modules}
+                  style={{ padding: "10px 16px", borderRadius: 8, border: "none", background: "#0d6efd", color: "#fff", fontWeight: 600, fontSize: 14, cursor: modules ? "pointer" : "not-allowed", opacity: modules ? 1 : 0.5 }}>
+                  Download PNG
+                </button>
+                <button onClick={downloadSVG} disabled={!modules}
+                  style={{ padding: "10px 16px", borderRadius: 8, border: "none", background: "#198754", color: "#fff", fontWeight: 600, fontSize: 14, cursor: modules ? "pointer" : "not-allowed", opacity: modules ? 1 : 0.5 }}>
+                  Download SVG
+                </button>
               </div>
-              <button onClick={handleCopy} disabled={!matrix}
-                style={{
-                  width: "100%", marginTop: 10, padding: "12px 16px", borderRadius: 8,
-                  border: "2px solid #dee2e6", background: "#fff", color: "#1a1a2e",
-                  fontWeight: 600, fontSize: 14, cursor: matrix ? "pointer" : "not-allowed", opacity: matrix ? 1 : 0.5,
-                }}>Copy to Clipboard</button>
-            </div>
-
-            <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #e9ecef" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: "#1a1a2e" }}>History</h2>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button onClick={() => setShowHistory(!showHistory)}
-                    style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #dee2e6", background: "#fff", cursor: "pointer", fontSize: 12 }}>
-                    {showHistory ? "Hide" : "Show"}
-                  </button>
-                  {history.length > 0 && (
-                    <button onClick={handleHistoryClear}
-                      style={{ padding: "4px 10px", borderRadius: 6, border: "1px solid #fecaca", background: "#fff5f5", color: "#dc3545", cursor: "pointer", fontSize: 12 }}>
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {showHistory && (
-                <div style={{ maxHeight: 240, overflowY: "auto" }}>
-                  {history.length === 0 ? (
-                    <p style={{ fontSize: 13, color: "#adb5bd", textAlign: "center", padding: 16 }}>No history yet</p>
-                  ) : (
-                    history.map((entry) => (
-                      <div key={entry.id} style={{
-                        display: "flex", alignItems: "center", gap: 10, padding: "8px 0",
-                        borderBottom: "1px solid #f1f3f5",
-                      }}>
-                        <div dangerouslySetInnerHTML={{ __html: entry.thumbnail }}
-                          style={{ width: 32, height: 32, flexShrink: 0, lineHeight: 0 }} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 12, color: "#1a1a2e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {entry.text}
-                          </div>
-                          <div style={{ fontSize: 11, color: "#adb5bd" }}>{formatTimestamp(entry.timestamp)}</div>
-                        </div>
-                        <button onClick={() => handleHistoryRestore(entry)}
-                          style={{ padding: "3px 8px", borderRadius: 4, border: "1px solid #dee2e6", background: "#fff", cursor: "pointer", fontSize: 11 }}>
-                          Use
-                        </button>
-                        <button onClick={() => handleHistoryDelete(entry.id)}
-                          style={{ padding: "3px 8px", borderRadius: 4, border: "1px solid #fecaca", background: "#fff5f5", color: "#dc3545", cursor: "pointer", fontSize: 11 }}>
-                          Del
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
-      </div>
 
-      <style>{`
-        @media (max-width: 768px) {
-          div[style*="grid-template-columns: 1fr 1fr"] {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
+        <style>{`@media (max-width: 768px) { div[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; } }`}</style>
+      </div>
     </div>
   );
 }
