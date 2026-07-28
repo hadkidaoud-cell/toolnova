@@ -45,13 +45,6 @@ export function Drawer({
     bottom: "inset-x-0 bottom-0",
   };
 
-  const transforms: Record<string, string> = {
-    left: "-translate-x-full",
-    right: "translate-x-full",
-    top: "-translate-y-full",
-    bottom: "translate-y-full",
-  };
-
   return (
     <div data-testid={testId} className="fixed inset-0 z-50">
       <div

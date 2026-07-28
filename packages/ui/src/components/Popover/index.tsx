@@ -8,7 +8,6 @@ export function Popover({
   content,
   side = "bottom",
   align = "center",
-  children,
   className,
   testId,
 }: PopoverProps) {

@@ -6,7 +6,7 @@ export function useToggle(initial = false): [boolean, () => void, (v: boolean) =
   return [value, toggle, setValue];
 }
 
-export function useClickOutside(handler: () => void): React.RefObject<HTMLElement> {
+export function useClickOutside(handler: () => void): React.RefObject<HTMLElement | null> {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {

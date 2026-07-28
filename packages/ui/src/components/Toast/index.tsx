@@ -40,7 +40,7 @@ export function Toast({
     },
   };
 
-  const v = variants[variant];
+  const v = variants[variant]!;
 
   return (
     <div

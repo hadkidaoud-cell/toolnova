@@ -53,7 +53,7 @@ export function Badge({
       className={cn(
         "inline-flex items-center font-medium rounded-full",
         sizeClasses(size),
-        colors[color][variant],
+        colors[color]![variant]!,
         variant === "outline" && "border",
         className
       )}

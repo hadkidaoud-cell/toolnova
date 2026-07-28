@@ -7,7 +7,6 @@ export function Dropdown({
   trigger,
   items,
   align = "start",
-  children,
   className,
   testId,
 }: DropdownProps) {

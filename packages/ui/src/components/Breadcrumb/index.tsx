@@ -4,7 +4,6 @@ import { cn } from "../../utils";
 export function Breadcrumb({
   items,
   separator = "/",
-  children,
   className,
   testId,
 }: BreadcrumbProps) {

@@ -52,8 +52,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                 : "border-neutral-300 dark:border-neutral-600",
               inputSizeClasses(size),
-              leftAddon && "pl-10",
-              rightAddon && "pr-10",
+              leftAddon ? "pl-10" : undefined,
+              rightAddon ? "pr-10" : undefined,
               className
             )}
             {...props}

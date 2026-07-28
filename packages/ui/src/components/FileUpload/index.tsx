@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { FileUploadProps } from "../../types";
 import { cn } from "../../utils";
-import { Button } from "../Button";
 
 export function FileUpload({
   accept,

@@ -27,7 +27,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(
       xl: { track: "h-8 w-14", thumb: "h-6 w-6", translate: "translate-x-6" },
     };
 
-    const s = sizes[size];
+    const s = sizes[size]!;
 
     return (
       <div className={cn("flex items-center gap-2", className)}>
