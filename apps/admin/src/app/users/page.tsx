@@ -1,11 +1,7 @@
-export default function UsersPage() {
-  const users = [
-    { id: 1, name: "John Doe", email: "john@example.com", role: "Admin", status: "Active", joined: "Jan 15, 2024" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", role: "User", status: "Active", joined: "Feb 20, 2024" },
-    { id: 3, name: "Bob Wilson", email: "bob@example.com", role: "User", status: "Active", joined: "Mar 10, 2024" },
-    { id: 4, name: "Alice Brown", email: "alice@example.com", role: "Moderator", status: "Active", joined: "Apr 5, 2024" },
-    { id: 5, name: "Charlie Davis", email: "charlie@example.com", role: "User", status: "Inactive", joined: "May 12, 2024" },
-  ];
+import { prisma } from "@/lib/prisma";
+
+export default async function UsersPage() {
+  const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
 
   return (
     <div>
@@ -32,6 +28,11 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-neutral-400">No users found</td>
+                </tr>
+              )}
               {users.map((user) => (
                 <tr key={user.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
                   <td className="px-4 py-3">
@@ -48,14 +49,16 @@ export default function UsersPage() {
                   <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{user.role}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                      user.status === "Active"
+                      user.status === "ACTIVE"
                         ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
+                        : user.status === "INACTIVE"
+                        ? "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
+                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
                     }`}>
-                      {user.status}
+                      {user.status.charAt(0) + user.status.slice(1).toLowerCase()}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{user.joined}</td>
+                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{user.createdAt.toLocaleDateString()}</td>
                   <td className="px-4 py-3">
                     <button className="text-brand-600 hover:text-brand-700">Edit</button>
                   </td>

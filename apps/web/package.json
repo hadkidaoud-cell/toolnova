@@ -9,14 +9,18 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf .next .turbo node_modules"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.11.3",
+    "@toolnova/config": "workspace:*",
+    "@toolnova/auth": "workspace:*",
+    "@toolnova/types": "workspace:*",
     "@toolnova/ui": "workspace:*",
     "@toolnova/utils": "workspace:*",
-    "@toolnova/config": "workspace:*",
-    "@toolnova/types": "workspace:*",
     "next": "^15.1.0",
+    "next-auth": "5.0.0-beta.32",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

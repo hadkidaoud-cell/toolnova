@@ -12,6 +12,7 @@
     "resolveJsonModule": true,
     "allowJs": true,
     "incremental": true,
+    "noImplicitAny": false,
     "paths": {
       "@/*": [
         "./src/*"
@@ -39,6 +40,12 @@
       ],
       "@toolnova/types": [
         "../../packages/types/src"
+      ],
+      "@toolnova/database": [
+        "../../packages/database/src"
+      ],
+      "@toolnova/database/src/*": [
+        "../../packages/database/src/*"
       ]
     },
     "plugins": [

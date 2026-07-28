@@ -12,11 +12,18 @@
     "clean": "rm -rf .next .turbo node_modules"
   },
   "dependencies": {
-    "@toolnova/ui": "workspace:*",
-    "@toolnova/utils": "workspace:*",
+    "@auth/prisma-adapter": "^2.11.3",
+    "@libsql/client": "^0.17.4",
+    "@prisma/adapter-libsql": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "@toolnova/auth": "workspace:*",
     "@toolnova/config": "workspace:*",
     "@toolnova/types": "workspace:*",
+    "@toolnova/ui": "workspace:*",
+    "@toolnova/utils": "workspace:*",
     "next": "^15.1.0",
+    "next-auth": "5.0.0-beta.32",
+    "prisma": "^7.9.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

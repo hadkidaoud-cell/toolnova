@@ -5,8 +5,12 @@ build/
 dist/
 .turbo/
 coverage/
-.env*.local
-.env
+.env*
+!.env.example
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+*.db
+dev.log
+packages/database/src/generated/
+apps/admin/.env

@@ -9,19 +9,33 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    }
+    },
+    "./src/*": "./src/*"
   },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist .turbo node_modules"
+    "clean": "rm -rf dist .turbo node_modules",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "db:migrate": "prisma migrate dev"
   },
   "dependencies": {
-    "@toolnova/types": "workspace:*"
+    "@libsql/client": "^0.17.4",
+    "@prisma/adapter-libsql": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "@toolnova/types": "workspace:*",
+    "bcryptjs": "^3.0.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "dotenv": "^17.4.2",
+    "prisma": "^7.9.1",
     "tsup": "^8.3.5",
+    "tsx": "^4.23.1",
     "typescript": "^5.7.3"
   }
 }

@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  ADMIN
+  USER
+  MODERATOR
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+enum ToolStatus {
+  PUBLISHED
+  DRAFT
+  ARCHIVED
+}
+
+enum BackupType {
+  FULL
+  PARTIAL
+}
+
+enum BackupStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  name      String
+  password  String
+  role      Role       @default(USER)
+  avatar    String?
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  sessions    Session[]
+  toolUsages  ToolUsage[]
+  activityLog ActivityLog[]
+}
+
+model Tool {
+  id              Int        @id @default(autoincrement())
+  name            String
+  slug            String     @unique
+  description     String
+  longDescription String?
+  categoryId      Int
+  category        Category   @relation(fields: [categoryId], references: [id])
+  icon            String?
+  status          ToolStatus @default(DRAFT)
+  views           Int        @default(0)
+  metadata        String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  toolUsages ToolUsage[]
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  toolCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tools Tool[]
+}
+
+model ToolUsage {
+  id        Int      @id @default(autoincrement())
+  toolId    Int
+  tool      Tool     @relation(fields: [toolId], references: [id])
+  userId    Int?
+  user      User?    @relation(fields: [userId], references: [id])
+  ip        String?
+  userAgent String?
+  metadata  String?
+  createdAt DateTime @default(now())
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model ActivityLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  entityType String
+  entityId   String?
+  metadata   String?
+  ip         String?
+  createdAt  DateTime @default(now())
+}
+
+model Backup {
+  id        Int          @id @default(autoincrement())
+  filename  String
+  size      Int
+  type      BackupType
+  status    BackupStatus @default(PENDING)
+  metadata  String?
+  createdAt DateTime     @default(now())
+}
+
+model Setting {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       String
+  group       String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

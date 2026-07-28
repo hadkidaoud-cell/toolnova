@@ -1,10 +1,7 @@
-export default function BackupsPage() {
-  const backups = [
-    { id: 1, name: "backup-2024-01-15.zip", size: "24.5 MB", created: "Jan 15, 2024 10:00 AM", status: "Completed" },
-    { id: 2, name: "backup-2024-01-14.zip", size: "24.2 MB", created: "Jan 14, 2024 10:00 AM", status: "Completed" },
-    { id: 3, name: "backup-2024-01-13.zip", size: "23.8 MB", created: "Jan 13, 2024 10:00 AM", status: "Completed" },
-    { id: 4, name: "backup-2024-01-12.zip", size: "23.5 MB", created: "Jan 12, 2024 10:00 AM", status: "Completed" },
-  ];
+import { prisma } from "@/lib/prisma";
+
+export default async function BackupsPage() {
+  const backups = await prisma.backup.findMany({ orderBy: { createdAt: "desc" } });
 
   return (
     <div>
@@ -31,14 +28,27 @@ export default function BackupsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+              {backups.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-neutral-400">No backups yet</td>
+                </tr>
+              )}
               {backups.map((backup) => (
                 <tr key={backup.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-                  <td className="px-4 py-3 font-medium text-neutral-900 dark:text-white">{backup.name}</td>
-                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{backup.size}</td>
-                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{backup.created}</td>
+                  <td className="px-4 py-3 font-medium text-neutral-900 dark:text-white">{backup.filename}</td>
+                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{(backup.size / 1024 / 1024).toFixed(1)} MB</td>
+                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{backup.createdAt.toLocaleString()}</td>
                   <td className="px-4 py-3">
-                    <span className="inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                      {backup.status}
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                      backup.status === "COMPLETED"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : backup.status === "FAILED"
+                        ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        : backup.status === "IN_PROGRESS"
+                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                    }`}>
+                      {backup.status.charAt(0) + backup.status.slice(1).toLowerCase()}
                     </span>
                   </td>
                   <td className="px-4 py-3">

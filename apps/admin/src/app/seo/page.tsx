@@ -1,4 +1,9 @@
-export default function SEOPage() {
+import { prisma } from "@/lib/prisma";
+
+export default async function SEOPage() {
+  const siteTitleSetting = await prisma.setting.findUnique({ where: { key: "site_title" } });
+  const metaDescSetting = await prisma.setting.findUnique({ where: { key: "meta_description" } });
+
   return (
     <div>
       <div>
@@ -14,7 +19,7 @@ export default function SEOPage() {
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Site Title</label>
               <input
                 type="text"
-                defaultValue="ToolNova - Every Tool. One Place."
+                defaultValue={siteTitleSetting?.value ?? "ToolNova - Every Tool. One Place."}
                 className="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white"
               />
             </div>
@@ -22,7 +27,7 @@ export default function SEOPage() {
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Meta Description</label>
               <textarea
                 rows={3}
-                defaultValue="Discover hundreds of free online tools."
+                defaultValue={metaDescSetting?.value ?? "Discover hundreds of free online tools."}
                 className="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white"
               />
             </div>

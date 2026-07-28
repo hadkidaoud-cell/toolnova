@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@toolnova/ui", "@toolnova/utils", "@toolnova/config", "@toolnova/types", "@toolnova/core"],
+  transpilePackages: ["@toolnova/ui", "@toolnova/utils", "@toolnova/config", "@toolnova/types", "@toolnova/core", "@toolnova/auth"],
   images: {
     formats: ["image/avif", "image/webp"],
   },

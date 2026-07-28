@@ -1,17 +1,18 @@
-export default function LogsPage() {
-  const logs = [
-    { id: 1, level: "INFO", message: "Application started", timestamp: "2024-01-15 10:30:00", source: "server" },
-    { id: 2, level: "INFO", message: "New user registered: john@example.com", timestamp: "2024-01-15 10:35:00", source: "auth" },
-    { id: 3, level: "WARN", message: "Rate limit exceeded for IP 192.168.1.1", timestamp: "2024-01-15 10:40:00", source: "api" },
-    { id: 4, level: "ERROR", message: "Failed to process image: invalid format", timestamp: "2024-01-15 10:45:00", source: "tools" },
-    { id: 5, level: "INFO", message: "Tool updated: JSON Formatter", timestamp: "2024-01-15 10:50:00", source: "admin" },
-    { id: 6, level: "DEBUG", message: "Cache cleared successfully", timestamp: "2024-01-15 10:55:00", source: "cache" },
-  ];
+import { prisma } from "@/lib/prisma";
+
+export default async function LogsPage() {
+  const logs = await prisma.activityLog.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
 
   const levelColors: Record<string, string> = {
+    CREATE: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    UPDATE: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    DELETE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    ERROR: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
     INFO: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
     WARN: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-    ERROR: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
     DEBUG: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400",
   };
 
@@ -38,17 +39,24 @@ export default function LogsPage() {
           />
         </div>
         <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
+          {logs.length === 0 && (
+            <div className="px-4 py-8 text-center text-neutral-400">No logs yet</div>
+          )}
           {logs.map((log) => (
             <div key={log.id} className="flex items-start gap-4 px-4 py-3">
-              <span className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-medium ${levelColors[log.level]}`}>
-                {log.level}
+              <span className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-medium ${levelColors[log.action] || "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"}`}>
+                {log.action}
               </span>
               <div className="flex-1">
-                <div className="text-sm text-neutral-900 dark:text-white">{log.message}</div>
+                <div className="text-sm text-neutral-900 dark:text-white">{log.entityType}{log.entityId ? ` #${log.entityId}` : ""}</div>
                 <div className="mt-1 flex items-center gap-3 text-xs text-neutral-500">
-                  <span>{log.timestamp}</span>
-                  <span>•</span>
-                  <span>{log.source}</span>
+                  <span>{log.createdAt.toLocaleString()}</span>
+                  {log.ip && (
+                    <>
+                      <span>•</span>
+                      <span>{log.ip}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

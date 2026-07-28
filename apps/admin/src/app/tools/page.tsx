@@ -1,12 +1,10 @@
-export default function ToolsPage() {
-  const tools = [
-    { id: 1, name: "JSON Formatter", category: "Developer", status: "Published", views: "12,345", updated: "2 hours ago" },
-    { id: 2, name: "Word Counter", category: "Text", status: "Published", views: "8,923", updated: "5 hours ago" },
-    { id: 3, name: "Password Generator", category: "Security", status: "Published", views: "7,654", updated: "1 day ago" },
-    { id: 4, name: "Image Compressor", category: "Image", status: "Draft", views: "5,432", updated: "2 days ago" },
-    { id: 5, name: "UUID Generator", category: "Generator", status: "Published", views: "3,210", updated: "3 days ago" },
-    { id: 6, name: "Color Picker", category: "Design", status: "Published", views: "2,876", updated: "1 week ago" },
-  ];
+import { prisma } from "@/lib/prisma";
+
+export default async function ToolsPage() {
+  const tools = await prisma.tool.findMany({
+    include: { category: true },
+    orderBy: { createdAt: "desc" },
+  });
 
   return (
     <div>
@@ -41,21 +39,28 @@ export default function ToolsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+              {tools.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-neutral-400">No tools found</td>
+                </tr>
+              )}
               {tools.map((tool) => (
                 <tr key={tool.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
                   <td className="px-4 py-3 font-medium text-neutral-900 dark:text-white">{tool.name}</td>
-                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{tool.category}</td>
+                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{tool.category.name}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                      tool.status === "Published"
+                      tool.status === "PUBLISHED"
                         ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                        : tool.status === "DRAFT"
+                        ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                        : "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400"
                     }`}>
-                      {tool.status}
+                      {tool.status.charAt(0) + tool.status.slice(1).toLowerCase()}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{tool.views}</td>
-                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{tool.updated}</td>
+                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{tool.views.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-neutral-600 dark:text-neutral-400">{tool.updatedAt.toLocaleDateString()}</td>
                   <td className="px-4 py-3">
                     <button className="text-brand-600 hover:text-brand-700">Edit</button>
                   </td>

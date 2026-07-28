@@ -1,4 +1,9 @@
-export default function SettingsPage() {
+import { prisma } from "@/lib/prisma";
+
+export default async function SettingsPage() {
+  const siteName = await prisma.setting.findUnique({ where: { key: "site_name" } });
+  const siteUrl = await prisma.setting.findUnique({ where: { key: "site_url" } });
+
   return (
     <div>
       <div>
@@ -14,7 +19,7 @@ export default function SettingsPage() {
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Site Name</label>
               <input
                 type="text"
-                defaultValue="ToolNova"
+                defaultValue={siteName?.value ?? "ToolNova"}
                 className="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white"
               />
             </div>
@@ -22,7 +27,7 @@ export default function SettingsPage() {
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Site URL</label>
               <input
                 type="url"
-                defaultValue="https://toolnova.com"
+                defaultValue={siteUrl?.value ?? "https://toolnova.com"}
                 className="mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white"
               />
             </div>
