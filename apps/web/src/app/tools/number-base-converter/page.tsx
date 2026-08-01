@@ -46,6 +46,21 @@ const BASES = [
 
 const DIGITS = "0123456789abcdefghijklmnopqrstuvwxyz";
 
+function parseInBase(input: string, base: number): bigint {
+  let s = input.trim().toLowerCase();
+  if (base === 16 && s.startsWith("0x")) s = s.slice(2);
+  if (base === 2 && s.startsWith("0b")) s = s.slice(2);
+  if (base === 8 && s.startsWith("0o")) s = s.slice(2);
+  if (!s) throw new Error("empty");
+  let big = 0n;
+  for (const ch of s) {
+    const d = DIGITS.indexOf(ch);
+    if (d < 0 || d >= base) throw new Error("invalid");
+    big = big * BigInt(base) + BigInt(d);
+  }
+  return big;
+}
+
 export default function NumberBaseConverterPage() {
   const { dict } = useI18n();
   const t = dict.tools;
@@ -87,16 +102,7 @@ export default function NumberBaseConverterPage() {
         return;
       }
       try {
-        const clean = value.trim().toLowerCase();
-        if (from === 16 && clean.startsWith("0x")) {
-          setError(u.invalidNumber);
-          return;
-        }
-        const big = BigInt(clean);
-        if (big < 0n) {
-          setError(u.invalidNumber);
-          return;
-        }
+        const big = parseInBase(value, from);
         setResult(big.toString(to).toUpperCase());
       } catch {
         setResult("");

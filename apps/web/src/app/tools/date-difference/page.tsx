@@ -48,20 +48,20 @@ interface DiffResult {
 
 function computeDiff(fromStr: string, toStr: string): DiffResult {
   if (!fromStr || !toStr) return { years: 0, months: 0, days: 0, totalDays: 0, totalWeeks: 0, valid: false };
-  const from = new Date(fromStr + "T00:00:00");
-  const to = new Date(toStr + "T00:00:00");
+  const from = new Date(fromStr + "T00:00:00Z");
+  const to = new Date(toStr + "T00:00:00Z");
   if (isNaN(from.getTime()) || isNaN(to.getTime()) || from > to) {
     return { years: 0, months: 0, days: 0, totalDays: 0, totalWeeks: 0, valid: false };
   }
-  const totalDays = Math.floor((to.getTime() - from.getTime()) / 86400000);
+  const totalDays = Math.round((to.getTime() - from.getTime()) / 86400000);
   const totalWeeks = Math.floor(totalDays / 7);
-  let years = to.getFullYear() - from.getFullYear();
-  let months = to.getMonth() - from.getMonth();
-  let days = to.getDate() - from.getDate();
+  let years = to.getUTCFullYear() - from.getUTCFullYear();
+  let months = to.getUTCMonth() - from.getUTCMonth();
+  let days = to.getUTCDate() - from.getUTCDate();
   if (days < 0) {
     months--;
-    const prevMonth = new Date(to.getFullYear(), to.getMonth(), 0);
-    days += prevMonth.getDate();
+    const prevMonth = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 0));
+    days += prevMonth.getUTCDate();
   }
   if (months < 0) {
     years--;

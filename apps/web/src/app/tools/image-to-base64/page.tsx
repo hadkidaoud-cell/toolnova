@@ -77,7 +77,7 @@ export default function ImageToBase64Page() {
     (file: File) => {
       setError("");
       if (!file.type.startsWith("image/")) {
-        setError(t.common.invalidPdf ? t.common.failedLoadImage : u.noFile);
+        setError(u.noFile);
         return;
       }
       if (file.size > MAX_SIZE) {

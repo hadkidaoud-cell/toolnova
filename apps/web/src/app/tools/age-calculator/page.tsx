@@ -48,30 +48,30 @@ interface AgeResult {
 }
 
 function computeAge(birthStr: string, refStr: string): AgeResult {
-  const birth = new Date(birthStr + "T00:00:00");
-  const ref = new Date(refStr + "T00:00:00");
+  const birth = new Date(birthStr + "T00:00:00Z");
+  const ref = new Date(refStr + "T00:00:00Z");
   const invalid = !birthStr || !refStr || isNaN(birth.getTime()) || isNaN(ref.getTime()) || birth > ref;
   if (invalid) return { years: 0, months: 0, days: 0, totalDays: 0, totalWeeks: 0, nextBirthdayDays: 0, valid: false };
 
-  const totalDays = Math.floor((ref.getTime() - birth.getTime()) / 86400000);
+  const totalDays = Math.round((ref.getTime() - birth.getTime()) / 86400000);
   const totalWeeks = Math.floor(totalDays / 7);
 
-  let years = ref.getFullYear() - birth.getFullYear();
-  let months = ref.getMonth() - birth.getMonth();
-  let days = ref.getDate() - birth.getDate();
+  let years = ref.getUTCFullYear() - birth.getUTCFullYear();
+  let months = ref.getUTCMonth() - birth.getUTCMonth();
+  let days = ref.getUTCDate() - birth.getUTCDate();
   if (days < 0) {
     months--;
-    const prevMonth = new Date(ref.getFullYear(), ref.getMonth(), 0);
-    days += prevMonth.getDate();
+    const prevMonth = new Date(Date.UTC(ref.getUTCFullYear(), ref.getUTCMonth(), 0));
+    days += prevMonth.getUTCDate();
   }
   if (months < 0) {
     years--;
     months += 12;
   }
 
-  let nextBirthday = new Date(ref.getFullYear(), birth.getMonth(), birth.getDate());
-  if (nextBirthday <= ref) nextBirthday = new Date(ref.getFullYear() + 1, birth.getMonth(), birth.getDate());
-  const nextBirthdayDays = Math.floor((nextBirthday.getTime() - ref.getTime()) / 86400000);
+  let nextBirthday = new Date(Date.UTC(ref.getUTCFullYear(), birth.getUTCMonth(), birth.getUTCDate()));
+  if (nextBirthday <= ref) nextBirthday = new Date(Date.UTC(ref.getUTCFullYear() + 1, birth.getUTCMonth(), birth.getUTCDate()));
+  const nextBirthdayDays = Math.round((nextBirthday.getTime() - ref.getTime()) / 86400000);
 
   return { years, months, days, totalDays, totalWeeks, nextBirthdayDays, valid: true };
 }

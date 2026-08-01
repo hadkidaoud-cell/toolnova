@@ -94,7 +94,7 @@ export default function ColorConverterPage() {
     categorySlug: "developer",
     icon: <Palette className="h-6 w-6" />,
     breadcrumbs: [
-      { label: category, href: "/category/design" },
+      { label: category, href: "/category/developer" },
       { label: meta.name, href: "/tools/color-converter" },
     ],
   };

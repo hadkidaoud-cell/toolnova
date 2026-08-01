@@ -104,7 +104,7 @@ export default function ImageCropperPage() {
     categorySlug: "image",
     icon: <Crop className="h-6 w-6" />,
     breadcrumbs: [
-      { label: category, href: "/category/design" },
+      { label: category, href: "/category/image" },
       { label: meta.name, href: "/tools/image-cropper" },
     ],
   };

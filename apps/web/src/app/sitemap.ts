@@ -25,9 +25,7 @@ const toolSlugs = [
 ];
 
 const categorySlugs = [
-  "text-tools", "image-tools", "developer-tools", "calculators",
-  "converters", "generators", "security-tools", "design-tools",
-  "document-tools", "seo-tools",
+  "text", "image", "developer", "calculation", "converter", "generator", "document",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

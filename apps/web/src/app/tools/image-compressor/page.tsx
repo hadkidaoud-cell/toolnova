@@ -81,7 +81,7 @@ export default function ImageCompressorPage() {
     categorySlug: "image",
     icon: <ImageIcon className="h-6 w-6" />,
     breadcrumbs: [
-      { label: category, href: "/category/design" },
+      { label: category, href: "/category/image" },
       { label: meta.name, href: "/tools/image-compressor" },
     ],
   };

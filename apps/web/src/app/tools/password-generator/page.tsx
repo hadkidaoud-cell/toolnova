@@ -102,7 +102,7 @@ export default function PasswordGeneratorPage() {
     categorySlug: "generator",
     icon: <ShieldCheck className="h-6 w-6" />,
     breadcrumbs: [
-      { label: category, href: "/category/security" },
+      { label: category, href: "/category/generator" },
       { label: meta.name, href: "/tools/password-generator" },
     ],
   };

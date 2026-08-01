@@ -155,7 +155,7 @@ export default function ColorPickerPage() {
     categorySlug: "image",
     icon: <Palette className="h-6 w-6" />,
     breadcrumbs: [
-      { label: category, href: "/category/design" },
+      { label: category, href: "/category/image" },
       { label: meta.name, href: "/tools/color-picker" },
     ],
   };
