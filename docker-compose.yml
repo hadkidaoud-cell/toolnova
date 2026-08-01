@@ -1,0 +1,38 @@
+version: "3.9"
+services:
+  web:
+    build:
+      context: .
+      args:
+        APP: web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./packages/database/dev.db
+    depends_on:
+      - api
+
+  admin:
+    build:
+      context: .
+      args:
+        APP: admin
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./packages/database/dev.db
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: .
+      args:
+        APP: api
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./packages/database/dev.db

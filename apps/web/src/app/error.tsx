@@ -1,25 +1,30 @@
 "use client";
 
+import { useI18n } from "@/i18n";
+
 export default function Error({
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { dict } = useI18n();
+  const t = dict.errorPage;
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">
-          Something went wrong
+          {t.title}
         </h1>
         <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-          An unexpected error occurred.
+          {t.description}
         </p>
         <button
           onClick={() => reset()}
           className="mt-8 inline-flex items-center rounded-lg bg-brand-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-brand-700"
         >
-          Try Again
+          {t.tryAgain}
         </button>
       </div>
     </main>

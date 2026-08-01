@@ -1,1 +1,1 @@
-export { prisma, default } from "@toolnova/database/src/client";
+export { prisma, default } from "@toolnova/database";

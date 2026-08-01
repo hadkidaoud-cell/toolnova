@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+export const dynamic = "force-dynamic";
 
 export default async function SEOPage() {
   const siteTitleSetting = await prisma.setting.findUnique({ where: { key: "site_title" } });

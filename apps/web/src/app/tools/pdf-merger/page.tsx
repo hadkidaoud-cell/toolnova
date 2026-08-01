@@ -1,90 +1,125 @@
 "use client";
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import type { PdfInputFile, PdfPageInfo, PdfMergeConfig } from "@toolnova/core/src/tools/pdf-merger";
-import {
-  loadPdfFromFile,
-  validatePdfFile,
-  getPageInfos,
-  formatFileSize,
-  downloadBlob,
-  mergePdfBuffers,
-} from "@toolnova/core/src/tools/pdf-merger";
+import { ToolLayout } from "@/components/tool/tool-layout";
+import { useI18n } from "@/i18n";
+import { PDFDocument } from "pdf-lib";
+import { FileStack } from "lucide-react";
 
-interface Toast {
-  message: string;
-  type: "success" | "error" | "info";
+const RELATED_SLUGS = ["pdf-compressor", "pdf-splitter", "image-to-pdf"] as const;
+
+const RELATED_ICONS: Record<string, string> = {
+  "pdf-compressor": "Z",
+  "pdf-splitter": "S",
+  "image-to-pdf": "I",
+};
+
+const LONG_DESCRIPTION =
+  "Our PDF Merger lets you combine multiple PDF files into a single document. Upload PDFs, drag to reorder them, preview individual files, and download the merged result. Powered by pdf-lib for reliable client-side PDF manipulation.";
+
+const FAQ = [
+  {
+    question: "How does PDF merging work?",
+    answer: "Each PDF is loaded and parsed client-side using pdf-lib. We copy all pages from each input PDF into a new document. No files are uploaded to any server — everything happens in your browser.",
+  },
+  {
+    question: "Is there a file size limit?",
+    answer: "There's no hard limit, but very large PDFs (over 100MB) may take significant time and memory to process. For best results, merge up to 20 files at a time.",
+  },
+  {
+    question: "Can I reorder pages before merging?",
+    answer: "You can drag and drop files to reorder them. Pages within each file maintain their original order. For page-level reordering, use our PDF Splitter tool first.",
+  },
+];
+
+const ARTICLE = {
+  title: "PDF Merging Best Practices",
+  content:
+    "When merging PDFs, consider the final page order carefully. Place title pages first, followed by tables of contents, main content, and appendices. Our tool preserves all content, fonts, and images from the original PDFs. For optimal results, ensure all input PDFs are compatible (same page size recommended).",
+};
+
+function formatFileSize(bytes: number): string {
+  if (bytes >= 1048576) return (bytes / 1048576).toFixed(2) + " MB";
+  if (bytes >= 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return bytes + " B";
+}
+
+function plural(u: { one: string; other: string }, n: number): string {
+  return n === 1 ? u.one : u.other;
+}
+
+interface PdfFile {
+  id: string;
+  name: string;
+  size: number;
+  pageCount: number;
+  buffer: ArrayBuffer;
 }
 
 export default function PdfMergerPage() {
-  const [files, setFiles] = useState<PdfInputFile[]>([]);
-  const [pageInfos, setPageInfos] = useState<PdfPageInfo[]>([]);
-  const [config, setConfig] = useState<PdfMergeConfig>({
-    outputName: "merged.pdf",
-    preserveBookmarks: true,
-    preserveMetadata: true,
-    flattenLayers: false,
-    compressOutput: true,
-  });
+  const { dict } = useI18n();
+  const t = dict.tools;
+  const category = t.categories.document;
+  const meta = t.meta["pdf-merger"];
+
+  const tool = {
+    name: meta.name,
+    description: meta.description,
+    longDescription: LONG_DESCRIPTION,
+    category,
+    categorySlug: "document",
+    icon: <FileStack className="h-6 w-6" />,
+    breadcrumbs: [
+      { label: category, href: "/category/document" },
+      { label: meta.name, href: "/tools/pdf-merger" },
+    ],
+  };
+
+  const relatedTools = RELATED_SLUGS.map((slug) => ({
+    slug,
+    name: t.meta[slug].name,
+    description: t.meta[slug].short,
+    icon: RELATED_ICONS[slug] ?? "+",
+  }));
+
+  const [files, setFiles] = useState<PdfFile[]>([]);
   const [merging, setMerging] = useState(false);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [resultSize, setResultSize] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [toast, setToast] = useState<Toast | null>(null);
-  const [previewFile, setPreviewFile] = useState<PdfInputFile | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const showToast = (message: string, type: Toast["type"] = "info") => {
+  const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  const totalPageCount = files.reduce((sum, f) => sum + f.pageCount, 0);
-
-  const handleFiles = useCallback(async (fileList: FileList | File[]) => {
-    const incoming = Array.from(fileList);
-    if (files.length + incoming.length > 20) {
-      showToast("Maximum 20 files allowed", "error");
+  const handleFiles = useCallback(async (incoming: FileList | File[]) => {
+    const fileArray = Array.from(incoming);
+    if (files.length + fileArray.length > 20) {
+      showToast(t.common.maxFiles, "error");
       return;
     }
 
-    const valid: PdfInputFile[] = [];
-    const errors: string[] = [];
-
-    for (const file of incoming) {
-      const err = validatePdfFile(file);
-      if (err) {
-        errors.push(`${file.name}: ${err}`);
+    for (const file of fileArray) {
+      if (file.type !== "application/pdf" && !file.name.endsWith(".pdf")) {
+        showToast(t.common.notPdf.replace("{name}", file.name), "error");
         continue;
       }
       try {
-        const pdf = await loadPdfFromFile(file);
-        valid.push(pdf);
-      } catch (e) {
-        errors.push(`${file.name}: ${e instanceof Error ? e.message : "Failed to load"}`);
+        const buffer = await file.arrayBuffer();
+        const pdfDoc = await PDFDocument.load(buffer, { ignoreEncryption: true });
+        const pageCount = pdfDoc.getPageCount();
+        const id = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+        setFiles((prev) => [...prev, { id, name: file.name, size: file.size, pageCount, buffer }]);
+      } catch {
+        showToast(t.common.failedLoadPdf.replace("{name}", file.name), "error");
       }
     }
-
-    if (errors.length > 0) showToast(errors[0], "error");
-    if (valid.length > 0) {
-      setFiles((prev) => {
-        const updated = [...prev, ...valid];
-        return updated;
-      });
-      showToast(`Added ${valid.length} PDF(s)`, "success");
-    }
-  }, [files.length]);
-
-  useEffect(() => {
-    const infos: PdfPageInfo[] = [];
-    for (const f of files) {
-      infos.push(...getPageInfos(f));
-    }
-    setPageInfos(infos);
-    setResultBlob(null);
-    setResultSize(0);
-  }, [files]);
+  }, [files.length, t]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -94,183 +129,148 @@ export default function PdfMergerPage() {
 
   const removeFile = useCallback((id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
-    if (previewFile?.id === id) setPreviewFile(null);
-  }, [previewFile]);
+    setResultBlob(null);
+    if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }
+  }, [previewUrl]);
 
   const moveFile = useCallback((from: number, to: number) => {
+    if (from === to) return;
     setFiles((prev) => {
       const arr = [...prev];
-      const item = arr[from];
-      if (item === undefined || to < 0 || to >= arr.length) return arr;
+      const item = arr[from]!;
       arr.splice(from, 1);
       arr.splice(to, 0, item);
       return arr;
     });
+    setResultBlob(null);
   }, []);
+
+  const handlePreview = useCallback((file: PdfFile) => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    const blob = new Blob([file.buffer], { type: "application/pdf" });
+    setPreviewUrl(URL.createObjectURL(blob));
+  }, [previewUrl]);
+
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
+  }, [previewUrl]);
 
   const handleMerge = useCallback(async () => {
     if (files.length < 2) {
-      showToast("Add at least 2 PDF files to merge", "error");
+      showToast(t.merger.addAtLeast, "error");
       return;
     }
-
     setMerging(true);
     setResultBlob(null);
 
     try {
-      const buffers = files.map((f) => f.buffer);
-      const outputName = config.outputName.endsWith(".pdf") ? config.outputName : `${config.outputName}.pdf`;
-      const result = mergePdfBuffers(buffers, outputName);
-      setResultBlob(result.blob);
-      setResultSize(result.size);
-      showToast(`Merged ${result.pageCount} pages into ${outputName}`, "success");
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "Merge failed", "error");
+      const mergedPdf = await PDFDocument.create();
+      for (const file of files) {
+        const pdfDoc = await PDFDocument.load(file.buffer, { ignoreEncryption: true });
+        const pages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+        for (const page of pages) mergedPdf.addPage(page);
+      }
+      const mergedBytes = await mergedPdf.save();
+      const blob = new Blob([mergedBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+      setResultBlob(blob);
+      setResultSize(mergedBytes.length);
+      const totalPages = files.reduce((s, f) => s + f.pageCount, 0);
+      showToast(t.merger.mergedToast.replace("{pages}", String(totalPages)), "success");
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : t.merger.mergeFailed, "error");
     } finally {
       setMerging(false);
     }
-  }, [files, config]);
+  }, [files, t]);
 
   const handleDownload = useCallback(() => {
-    if (resultBlob === null) return;
-    const outputName = config.outputName.endsWith(".pdf") ? config.outputName : `${config.outputName}.pdf`;
-    downloadBlob(resultBlob, outputName);
-  }, [resultBlob, config]);
+    if (!resultBlob) return;
+    const url = URL.createObjectURL(resultBlob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "merged.pdf";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [resultBlob]);
 
-  const previewUrl = previewFile !== null ? URL.createObjectURL(new Blob([previewFile.buffer], { type: "application/pdf" })) : null;
-
-  useEffect(() => {
-    return () => {
-      if (previewUrl !== null) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
+  const totalPages = files.reduce((s, f) => s + f.pageCount, 0);
+  const totalSize = files.reduce((s, f) => s + f.size, 0);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
-      {toast !== null && (
-        <div style={{
-          position: "fixed", top: 20, right: 20, zIndex: 9999,
-          padding: "12px 24px", borderRadius: 8, color: "#fff", fontWeight: 600, fontSize: 14,
-          background: toast.type === "success" ? "#198754" : toast.type === "error" ? "#dc3545" : "#0d6efd",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-        }}>{toast.message}</div>
-      )}
+    <ToolLayout
+      name={tool.name}
+      description={tool.description}
+      longDescription={tool.longDescription}
+      category={tool.category}
+      categorySlug={tool.categorySlug}
+      breadcrumbs={tool.breadcrumbs}
+      icon={tool.icon}
+      faq={FAQ}
+      article={ARTICLE}
+      relatedTools={relatedTools}
+    >
+      <div className="space-y-6">
+        {toast && (
+          <div className={`rounded-lg px-4 py-3 text-sm font-medium ${
+            toast.type === "success" ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+          }`}>
+            {toast.message}
+          </div>
+        )}
 
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "24px 16px" }}>
-        <header style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 800, color: "#1a1a2e", margin: "0 0 8px" }}>PDF Merger</h1>
-          <p style={{ fontSize: 16, color: "#6c757d", margin: 0 }}>Combine multiple PDF files into one. Drag to reorder, preview, and download.</p>
-        </header>
-
-        {/* Upload Area */}
         <div
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          style={{
-            border: `2px dashed ${dragOver ? "#0d6efd" : "#dee2e6"}`,
-            borderRadius: 12, padding: "40px 24px", textAlign: "center", cursor: "pointer",
-            background: dragOver ? "#e7f1ff" : "#fff", marginBottom: 24,
-            transition: "all 0.2s",
-          }}
+          className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-all ${
+            dragOver ? "border-brand-500 bg-brand-50 dark:bg-brand-900/20" : "border-neutral-300 bg-white hover:border-neutral-400 dark:border-neutral-600 dark:bg-neutral-800"
+          }`}
         >
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" strokeWidth="1.5">
+          <svg className="mx-auto h-12 w-12 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
             <polyline points="14,2 14,8 20,8" />
-            <line x1="12" y1="18" x2="12" y2="12" />
-            <polyline points="9,15 12,12 15,15" />
+            <line x1="12" y1="18" x2="12" y2="12" /><polyline points="9,15 12,12 15,15" />
           </svg>
-          <p style={{ fontSize: 16, color: "#495057", fontWeight: 600, margin: "12px 0 4px" }}>
-            Drop PDF files here or click to upload
-          </p>
-          <p style={{ fontSize: 13, color: "#adb5bd", margin: 0 }}>
-            PDF files only — up to 100MB each — max 20 files
-          </p>
+          <p className="mt-3 font-medium text-neutral-700 dark:text-neutral-300">{t.common.dropPdfs}</p>
+          <p className="mt-1 text-sm text-neutral-400">{t.common.pdfOnlyMax20}</p>
           <input ref={fileInputRef} type="file" multiple accept=".pdf,application/pdf"
-            onChange={(e) => { if (e.target.files) handleFiles(e.target.files); e.target.value = ""; }}
-            style={{ display: "none" }} />
+            onChange={(e) => { if (e.target.files) handleFiles(e.target.files); e.target.value = ""; }} className="hidden" />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: previewFile !== null ? "1fr 1fr" : "1fr 340px", gap: 24, alignItems: "start" }}>
-          {/* File List */}
-          <div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
             {files.length === 0 ? (
-              <div style={{ background: "#fff", borderRadius: 12, padding: 60, textAlign: "center", border: "1px solid #e9ecef" }}>
-                <p style={{ color: "#adb5bd", fontSize: 15 }}>No PDF files added yet</p>
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-12 text-center dark:border-neutral-700 dark:bg-neutral-800">
+                <p className="text-neutral-400">{t.common.noPdfFiles}</p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="space-y-2">
                 {files.map((file, idx) => (
                   <div
                     key={file.id}
                     draggable
                     onDragStart={() => setDragIdx(idx)}
-                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = "#0d6efd"; }}
-                    onDragLeave={(e) => { e.currentTarget.style.borderColor = "#e9ecef"; }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.style.borderColor = "#e9ecef";
-                      if (dragIdx !== null && dragIdx !== idx) moveFile(dragIdx, idx);
-                      setDragIdx(null);
-                    }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => { e.preventDefault(); if (dragIdx !== null && dragIdx !== idx) moveFile(dragIdx, idx); setDragIdx(null); }}
                     onDragEnd={() => setDragIdx(null)}
-                    style={{
-                      background: previewFile?.id === file.id ? "#e7f1ff" : "#fff",
-                      borderRadius: 10, padding: "14px 16px",
-                      border: `2px solid ${previewFile?.id === file.id ? "#0d6efd" : "#e9ecef"}`,
-                      display: "flex", gap: 12, alignItems: "center",
-                      cursor: "grab", transition: "all 0.15s",
-                    }}
+                    className="flex items-center gap-3 rounded-xl border-2 border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-800"
                   >
-                    {/* Drag Handle */}
-                    <div style={{ color: "#adb5bd", fontSize: 18, cursor: "grab", userSelect: "none" }} title="Drag to reorder">⠿</div>
-
-                    {/* Order Number */}
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 6, background: "#0d6efd", color: "#fff",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontWeight: 700, fontSize: 13, flexShrink: 0,
-                    }}>{idx + 1}</div>
-
-                    {/* PDF Icon */}
-                    <div style={{
-                      width: 40, height: 48, borderRadius: 4, background: "#dc3545", color: "#fff",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontWeight: 800, fontSize: 11, flexShrink: 0, lineHeight: 1,
-                    }}>PDF</div>
-
-                    {/* Info */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, fontSize: 14, color: "#1a1a2e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {file.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: "#6c757d", marginTop: 2 }}>
-                        {file.pageCount} page{file.pageCount !== 1 ? "s" : ""} · {formatFileSize(file.size)}
-                      </div>
+                    <span className="cursor-grab text-neutral-400" title={t.common.dragToReorder}>⠿</span>
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-brand-600 text-xs font-bold text-white">{idx + 1}</span>
+                    <div className="flex h-12 w-10 shrink-0 items-center justify-center rounded bg-red-500 text-xs font-bold text-white">PDF</div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-neutral-900 dark:text-white">{file.name}</p>
+                      <p className="text-xs text-neutral-500">{file.pageCount} {plural(t.common.page, file.pageCount)} · {formatFileSize(file.size)}</p>
                     </div>
-
-                    {/* Actions */}
-                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setPreviewFile(previewFile?.id === file.id ? null : file); }}
-                        title="Preview"
-                        style={{
-                          padding: "6px 10px", borderRadius: 6, border: `1px solid ${previewFile?.id === file.id ? "#0d6efd" : "#dee2e6"}`,
-                          background: previewFile?.id === file.id ? "#e7f1ff" : "#fff",
-                          color: previewFile?.id === file.id ? "#0d6efd" : "#495057",
-                          fontSize: 12, fontWeight: 600, cursor: "pointer",
-                        }}>
-                        {previewFile?.id === file.id ? "Close" : "Preview"}
+                    <div className="flex shrink-0 gap-2">
+                      <button onClick={() => handlePreview(file)}
+                        className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                        {t.common.preview}
                       </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); removeFile(file.id); }}
-                        title="Remove"
-                        style={{
-                          padding: "6px 10px", borderRadius: 6, border: "1px solid #fecaca",
-                          background: "#fff5f5", color: "#dc3545", fontSize: 12, fontWeight: 600, cursor: "pointer",
-                        }}>
-                        Remove
+                      <button onClick={() => removeFile(file.id)}
+                        className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400">
+                        {t.common.remove}
                       </button>
                     </div>
                   </div>
@@ -278,139 +278,65 @@ export default function PdfMergerPage() {
               </div>
             )}
 
-            {/* Merge Result */}
-            {resultBlob !== null && (
-              <div style={{
-                marginTop: 16, background: "#fff", borderRadius: 12, border: "2px solid #198754",
-                padding: 20,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#198754" strokeWidth="2">
+            {resultBlob && (
+              <div className="mt-4 rounded-xl border-2 border-green-500 bg-green-50 p-4 dark:bg-green-900/20">
+                <div className="mb-3 flex items-center gap-3">
+                  <svg className="h-6 w-6 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22,4 12,14.01 9,11.01" />
                   </svg>
                   <div>
-                    <div style={{ fontWeight: 700, color: "#198754", fontSize: 16 }}>Merge Complete</div>
-                    <div style={{ fontSize: 13, color: "#6c757d" }}>
-                      {totalPageCount} pages · {formatFileSize(resultSize)}
-                    </div>
+                    <p className="font-bold text-green-700 dark:text-green-400">{t.merger.mergeComplete}</p>
+                    <p className="text-xs text-green-600 dark:text-green-500">{totalPages} {plural(t.common.page, totalPages)} · {formatFileSize(resultSize)}</p>
                   </div>
                 </div>
                 <button onClick={handleDownload}
-                  style={{
-                    width: "100%", padding: "12px 20px", borderRadius: 8, border: "none",
-                    background: "#198754", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer",
-                  }}>
-                  Download Merged PDF
+                  className="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-bold text-white hover:bg-green-700">
+                  {t.merger.downloadMerged}
                 </button>
               </div>
             )}
           </div>
 
-          {/* Preview Panel */}
-          {previewFile !== null && previewUrl !== null && (
-            <div style={{
-              background: "#fff", borderRadius: 12, border: "1px solid #e9ecef",
-              overflow: "hidden", position: "sticky", top: 24,
-            }}>
-              <div style={{ padding: "12px 16px", borderBottom: "1px solid #e9ecef", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontWeight: 600, fontSize: 14, color: "#1a1a2e" }}>{previewFile.name}</span>
-                <button onClick={() => setPreviewFile(null)}
-                  style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: "#6c757d" }}>×</button>
+          <div className="space-y-4">
+            {previewUrl ? (
+              <div className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-700">
+                <div className="flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800">
+                  <span className="text-sm font-medium">{t.common.preview}</span>
+                  <button onClick={() => { URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }}
+                    className="text-lg text-neutral-500 hover:text-neutral-700">&times;</button>
+                </div>
+                <iframe src={previewUrl} className="h-96 w-full border-none" title={t.merger.previewTitle} />
               </div>
-              <iframe src={previewUrl} title={previewFile.name}
-                style={{ width: "100%", height: 600, border: "none" }} />
-            </div>
-          )}
-
-          {/* Sidebar Settings */}
-          {previewFile === null && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 24 }}>
-              <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e9ecef" }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 16px", color: "#1a1a2e" }}>Settings</h3>
-
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#495057", marginBottom: 6 }}>Output File Name</label>
-                  <input type="text" value={config.outputName}
-                    onChange={(e) => setConfig((c) => ({ ...c, outputName: e.target.value }))}
-                    placeholder="merged.pdf"
-                    style={{
-                      width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid #dee2e6",
-                      fontSize: 14, outline: "none", boxSizing: "border-box",
-                    }} />
+            ) : (
+              <>
+                <div className="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-800">
+                  <h3 className="mb-3 text-sm font-bold text-neutral-900 dark:text-white">{t.merger.summary}</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="text-neutral-500">{t.merger.files}</span><span className="font-medium">{files.length}</span></div>
+                    <div className="flex justify-between"><span className="text-neutral-500">{t.merger.totalPages}</span><span className="font-medium">{totalPages}</span></div>
+                    <div className="flex justify-between"><span className="text-neutral-500">{t.merger.totalSize}</span><span className="font-medium">{formatFileSize(totalSize)}</span></div>
+                  </div>
                 </div>
 
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, color: "#495057" }}>
-                    <input type="checkbox" checked={config.preserveBookmarks}
-                      onChange={(e) => setConfig((c) => ({ ...c, preserveBookmarks: e.target.checked }))} />
-                    <span>Preserve Bookmarks</span>
-                  </label>
-                </div>
-
-                <div style={{ marginBottom: 0 }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, color: "#495057" }}>
-                    <input type="checkbox" checked={config.preserveMetadata}
-                      onChange={(e) => setConfig((c) => ({ ...c, preserveMetadata: e.target.checked }))} />
-                    <span>Preserve Metadata</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e9ecef" }}>
-                <h3 style={{ fontSize: 14, fontWeight: 700, margin: "0 0 12px", color: "#1a1a2e" }}>Summary</h3>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: "#6c757d" }}>Files</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a2e" }}>{files.length}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: "#6c757d" }}>Total Pages</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a2e" }}>{totalPageCount}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 13, color: "#6c757d" }}>Total Size</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#1a1a2e" }}>
-                    {formatFileSize(files.reduce((sum, f) => sum + f.size, 0))}
-                  </span>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <button onClick={handleMerge}
-                  disabled={files.length < 2 || merging}
-                  style={{
-                    width: "100%", padding: "14px 20px", borderRadius: 8, border: "none",
-                    background: files.length >= 2 && !merging ? "#0d6efd" : "#adb5bd",
-                    color: "#fff", fontWeight: 700, fontSize: 15,
-                    cursor: files.length >= 2 && !merging ? "pointer" : "not-allowed",
-                  }}>
-                  {merging ? "Merging..." : `Merge ${files.length} PDFs`}
-                </button>
-
-                {files.length > 0 && (
-                  <button onClick={() => { setFiles([]); setResultBlob(null); setPreviewFile(null); }}
-                    style={{
-                      width: "100%", padding: "10px 20px", borderRadius: 8, border: "1px solid #dee2e6",
-                      background: "#fff", color: "#6c757d", fontWeight: 600, fontSize: 13, cursor: "pointer",
-                    }}>
-                    Clear All
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={handleMerge}
+                    disabled={files.length < 2 || merging}
+                    className="w-full rounded-lg bg-brand-600 px-4 py-3 text-sm font-bold text-white hover:bg-brand-700 disabled:opacity-50">
+                    {merging ? t.merger.merging : t.merger.merge.replace("{count}", String(files.length))}
                   </button>
-                )}
-              </div>
-            </div>
-          )}
+                  {files.length > 0 && (
+                    <button onClick={() => { setFiles([]); setResultBlob(null); setPreviewUrl(null); }}
+                      className="w-full rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                      {t.common.clearAll}
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 768px) {
-          div[style*="grid-template-columns: 1fr 340px"],
-          div[style*="grid-template-columns: 1fr 1fr"] {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
-    </div>
+    </ToolLayout>
   );
 }

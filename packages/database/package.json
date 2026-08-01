@@ -24,16 +24,14 @@
     "db:migrate": "prisma migrate dev"
   },
   "dependencies": {
-    "@libsql/client": "^0.17.4",
-    "@prisma/adapter-libsql": "^7.9.1",
-    "@prisma/client": "^7.9.1",
+    "@prisma/client": "^6.6.0",
     "@toolnova/types": "workspace:*",
     "bcryptjs": "^3.0.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
     "dotenv": "^17.4.2",
-    "prisma": "^7.9.1",
+    "prisma": "^6.6.0",
     "tsup": "^8.3.5",
     "tsx": "^4.23.1",
     "typescript": "^5.7.3"

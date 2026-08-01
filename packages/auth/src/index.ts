@@ -1,1 +1,2 @@
-export { authConfig } from "./auth.config";
+export { createAuthConfig } from "./auth.config";
+export type { NextAuthConfig } from "next-auth";

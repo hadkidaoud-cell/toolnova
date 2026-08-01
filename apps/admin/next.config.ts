@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: process.cwd(),
+  serverExternalPackages: ["@prisma/client"],
   transpilePackages: ["@toolnova/ui", "@toolnova/utils", "@toolnova/config", "@toolnova/types", "@toolnova/core", "@toolnova/auth", "@toolnova/database"],
   images: {
     formats: ["image/avif", "image/webp"],

@@ -1,91 +1,133 @@
 "use client";
 
 import React, { useState, useCallback, useRef } from "react";
-import {
-  loadImageFromFile,
-  compressImage,
-  compressBatch,
-  downloadCompressedImage,
-  downloadAllCompressed,
-  validateImageFile,
-  formatFileSize,
-  getSavingsColor,
-} from "@toolnova/core/src/tools/image-compressor";
-import type {
-  ImageFile,
-  CompressionResult,
-  CompressionConfig,
-  CompressionFormat,
-  CompressionPreset,
-} from "@toolnova/core/src/tools/image-compressor";
+import { ToolLayout } from "@/components/tool/tool-layout";
+import { useI18n } from "@/i18n";
+import { Image as ImageIcon } from "lucide-react";
 
-const FORMAT_OPTIONS: { value: CompressionFormat; label: string }[] = [
-  { value: "jpeg", label: "JPEG" },
-  { value: "png", label: "PNG" },
-  { value: "webp", label: "WebP" },
+const RELATED_SLUGS = ["color-picker", "qr-code-generator", "image-to-pdf"] as const;
+
+const RELATED_ICONS: Record<string, string> = {
+  "color-picker": "●",
+  "qr-code-generator": "▦",
+  "image-to-pdf": "I",
+};
+
+const LONG_DESCRIPTION =
+  "Our Image Compressor uses the Canvas API to re-encode images with adjustable quality. Upload images, adjust quality settings, choose output format, and download compressed versions. Supports batch compression for multiple files at once.";
+
+const FAQ = [
+  {
+    question: "How does image compression work?",
+    answer: "Our tool uses the Canvas API to re-encode images. For JPEG and WebP, the quality parameter controls the compression level (higher = better quality, larger file). PNG compression is lossless but can reduce file size through color reduction.",
+  },
+  {
+    question: "Where are my images processed?",
+    answer: "All processing happens entirely in your browser. Your images are never uploaded to any server. This makes the tool fast and privacy-friendly.",
+  },
+  {
+    question: "What file types are supported?",
+    answer: "We support JPEG, PNG, and WebP input formats. Output formats include JPEG, PNG, and WebP.",
+  },
 ];
 
-const PRESET_OPTIONS: { value: CompressionPreset; label: string; desc: string }[] = [
-  { value: "web", label: "Web", desc: "Optimized for web — 80% quality" },
-  { value: "print", label: "Print", desc: "High quality for print — 95%" },
-  { value: "maximum", label: "Max", desc: "Lossless — 100%" },
-  { value: "minimum", label: "Min", desc: "Smallest size — 50%" },
-  { value: "custom", label: "Custom", desc: "Set your own quality" },
-];
+const ARTICLE = {
+  title: "Image Compression Best Practices",
+  content:
+    "For web use, JPEG at 80% quality offers a great balance of size and quality. PNG is best for images with transparency or text. WebP provides superior compression but isn't supported by all browsers yet. Always keep original files as backups when compressing images.",
+};
 
-interface Toast {
-  message: string;
-  type: "success" | "error" | "info";
+function formatFileSize(bytes: number): string {
+  if (bytes >= 1048576) return (bytes / 1048576).toFixed(2) + " MB";
+  if (bytes >= 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return bytes + " B";
+}
+
+interface ImageFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
+interface CompressResult {
+  id: string;
+  dataUrl: string;
+  size: number;
+  savingsPercent: number;
+  processingTime: number;
+}
+
+function getSavingsColor(percent: number): string {
+  if (percent > 50) return "#198754";
+  if (percent > 20) return "#ffc107";
+  return "#dc3545";
 }
 
 export default function ImageCompressorPage() {
+  const { dict } = useI18n();
+  const t = dict.tools;
+  const category = t.categories.image;
+  const meta = t.meta["image-compressor"];
+
+  const tool = {
+    name: meta.name,
+    description: meta.description,
+    longDescription: LONG_DESCRIPTION,
+    category,
+    categorySlug: "image",
+    icon: <ImageIcon className="h-6 w-6" />,
+    breadcrumbs: [
+      { label: category, href: "/category/design" },
+      { label: meta.name, href: "/tools/image-compressor" },
+    ],
+  };
+
+  const relatedTools = RELATED_SLUGS.map((slug) => ({
+    slug,
+    name: t.meta[slug].name,
+    description: t.meta[slug].short,
+    icon: RELATED_ICONS[slug] ?? "+",
+  }));
+
   const [images, setImages] = useState<ImageFile[]>([]);
-  const [results, setResults] = useState<CompressionResult[]>([]);
-  const [config, setConfig] = useState<Partial<CompressionConfig>>({
-    format: "jpeg",
-    quality: 85,
-    preset: "web",
-    maintainExif: true,
-    progressive: true,
-  });
+  const [results, setResults] = useState<Map<string, CompressResult>>(new Map());
+  const [format, setFormat] = useState<"jpeg" | "png" | "webp">("jpeg");
+  const [quality, setQuality] = useState(85);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState({ completed: 0, total: 0 });
-  const [toast, setToast] = useState<Toast | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const showToast = (message: string, type: Toast["type"] = "info") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
   const handleFiles = useCallback(async (files: FileList | File[]) => {
-    const fileArray = Array.from(files);
+    const incoming = Array.from(files);
     const valid: ImageFile[] = [];
-    const errors: string[] = [];
 
-    for (const file of fileArray) {
-      const error = validateImageFile(file);
-      if (error) {
-        errors.push(`${file.name}: ${error}`);
-        continue;
-      }
-      try {
-        const imageFile = await loadImageFromFile(file);
-        valid.push(imageFile);
-      } catch (err) {
-        errors.push(`${file.name}: ${err instanceof Error ? err.message : "Failed to load"}`);
-      }
-    }
+    for (const file of incoming) {
+      if (!file.type.match(/^image\/(jpeg|png|webp)$/)) continue;
+      if (file.size > 50 * 1024 * 1024) continue;
 
-    if (errors.length > 0) {
-      showToast(errors[0], "error");
+      const id = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      const dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = dataUrl;
+      });
+
+      valid.push({ id, name: file.name, size: file.size, type: file.type, dataUrl, width: img.width, height: img.height });
     }
 
     setImages((prev) => [...prev, ...valid]);
-    if (valid.length > 0) {
-      showToast(`Added ${valid.length} image(s)`, "success");
-    }
   }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -94,346 +136,251 @@ export default function ImageCompressorPage() {
     handleFiles(e.dataTransfer.files);
   }, [handleFiles]);
 
-  const handleCompress = useCallback(async () => {
+  const compressSingle = useCallback((image: ImageFile): Promise<CompressResult> => {
+    return new Promise((resolve) => {
+      const start = performance.now();
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0);
+
+        let mimeType = "image/jpeg";
+        if (format === "png") mimeType = "image/png";
+        else if (format === "webp") mimeType = "image/webp";
+
+        const outDataUrl = canvas.toDataURL(mimeType, quality / 100);
+        const outSize = Math.round((outDataUrl.length * 3) / 4);
+        const savingsPercent = image.size > 0 ? Math.round((1 - outSize / image.size) * 100) : 0;
+        const processingTime = Math.round(performance.now() - start);
+
+        resolve({ id: image.id, dataUrl: outDataUrl, size: outSize, savingsPercent, processingTime });
+      };
+      img.src = image.dataUrl;
+    });
+  }, [format, quality]);
+
+  const compressAll = useCallback(async () => {
     if (images.length === 0) return;
     setProcessing(true);
-    setResults([]);
+    setResults(new Map());
     setProgress({ completed: 0, total: images.length });
 
-    try {
-      const batchResult = await compressBatch(images, config, (completed, total) => {
-        setProgress({ completed, total });
-      });
-      setResults(batchResult.results);
-      showToast(
-        `Compressed ${batchResult.results.length} images — saved ${formatFileSize(batchResult.totalSavings)} (${batchResult.totalSavingsPercent}%)`,
-        "success"
-      );
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "Compression failed", "error");
-    } finally {
-      setProcessing(false);
+    const newResults = new Map(results);
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      if (!img) continue;
+      const result = await compressSingle(img);
+      newResults.set(img.id, result);
+      setProgress({ completed: i + 1, total: images.length });
     }
-  }, [images, config]);
-
-  const handleCompressSingle = useCallback(async (image: ImageFile) => {
-    try {
-      const result = await compressImage(image, config);
-      setResults((prev) => {
-        const filtered = prev.filter((r) => r.originalId !== image.id);
-        return [...filtered, result];
-      });
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "Failed", "error");
-    }
-  }, [config]);
+    setResults(newResults);
+    setProcessing(false);
+  }, [images, compressSingle]);
 
   const removeImage = useCallback((id: string) => {
     setImages((prev) => prev.filter((img) => img.id !== id));
-    setResults((prev) => prev.filter((r) => r.originalId !== id));
+    setResults((prev) => {
+      const next = new Map(prev);
+      next.delete(id);
+      return next;
+    });
   }, []);
 
   const clearAll = useCallback(() => {
     setImages([]);
-    setResults([]);
+    setResults(new Map());
   }, []);
 
-  const getResultForImage = (imageId: string): CompressionResult | undefined => {
-    return results.find((r) => r.originalId === imageId);
-  };
+  const downloadImage = useCallback((result: CompressResult, name: string) => {
+    const link = document.createElement("a");
+    link.href = result.dataUrl;
+    const ext = format === "png" ? "png" : format === "webp" ? "webp" : "jpg";
+    link.download = name.replace(/\.[^.]+$/, "") + `-compressed.${ext}`;
+    link.click();
+  }, [format]);
 
-  const totalOriginal = results.reduce((sum, r) => sum + r.original.size, 0);
-  const totalCompressed = results.reduce((sum, r) => sum + r.compressed.size, 0);
+  const downloadAll = useCallback(() => {
+    results.forEach((result, id) => {
+      const img = images.find((i) => i.id === id);
+      if (img) downloadImage(result, img.name);
+    });
+  }, [results, images, downloadImage]);
+
+  const totalOriginal = images.reduce((sum, img) => sum + img.size, 0);
+  const totalCompressed = Array.from(results.values()).reduce((sum, r) => sum + r.size, 0);
   const totalSavings = totalOriginal - totalCompressed;
   const totalSavingsPercent = totalOriginal > 0 ? Math.round((totalSavings / totalOriginal) * 100) : 0;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
-      {toast && (
-        <div style={{
-          position: "fixed", top: 20, right: 20, zIndex: 9999,
-          padding: "12px 24px", borderRadius: 8, color: "#fff", fontWeight: 600, fontSize: 14,
-          background: toast.type === "success" ? "#198754" : toast.type === "error" ? "#dc3545" : "#0d6efd",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-        }}>{toast.message}</div>
-      )}
-
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 16px" }}>
-        <header style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 800, color: "#1a1a2e", margin: "0 0 8px" }}>Image Compressor</h1>
-          <p style={{ fontSize: 16, color: "#6c757d", margin: 0 }}>Compress PNG, JPG, JPEG, and WebP images with real-time preview</p>
-        </header>
-
-        {/* Upload Area */}
+    <ToolLayout
+      name={tool.name}
+      description={tool.description}
+      longDescription={tool.longDescription}
+      category={tool.category}
+      categorySlug={tool.categorySlug}
+      breadcrumbs={tool.breadcrumbs}
+      icon={tool.icon}
+      faq={FAQ}
+      article={ARTICLE}
+      relatedTools={relatedTools}
+    >
+      <div className="space-y-6">
         <div
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          style={{
-            border: `2px dashed ${dragOver ? "#0d6efd" : "#dee2e6"}`,
-            borderRadius: 12, padding: "40px 24px", textAlign: "center", cursor: "pointer",
-            background: dragOver ? "#e7f1ff" : "#fff", marginBottom: 24,
-            transition: "all 0.2s",
-          }}
+          className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-all ${
+            dragOver ? "border-brand-500 bg-brand-50 dark:bg-brand-900/20" : "border-neutral-300 bg-white hover:border-neutral-400 dark:border-neutral-600 dark:bg-neutral-800"
+          }`}
         >
-          <div style={{ fontSize: 40, marginBottom: 8 }}>
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" strokeWidth="1.5">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-            </svg>
-          </div>
-          <p style={{ fontSize: 16, color: "#495057", fontWeight: 600, margin: "0 0 4px" }}>
-            Drop images here or click to upload
-          </p>
-          <p style={{ fontSize: 13, color: "#adb5bd", margin: 0 }}>
-            PNG, JPG, JPEG, WebP — up to 50MB each — max 50 files
-          </p>
+          <svg className="mx-auto h-12 w-12 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+          </svg>
+          <p className="mt-3 font-medium text-neutral-700 dark:text-neutral-300">{t.common.dropImages}</p>
+          <p className="mt-1 text-sm text-neutral-400">{t.common.imgFormats50mb}</p>
           <input ref={fileInputRef} type="file" multiple accept="image/png,image/jpeg,image/webp"
-            onChange={(e) => e.target.files && handleFiles(e.target.files)} style={{ display: "none" }} />
+            onChange={(e) => e.target.files && handleFiles(e.target.files)} className="hidden" />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 24, alignItems: "start" }}>
-          {/* Images Grid */}
+        <div className="grid gap-4 sm:grid-cols-3">
           <div>
-            {images.length === 0 ? (
-              <div style={{ background: "#fff", borderRadius: 12, padding: 60, textAlign: "center", border: "1px solid #e9ecef" }}>
-                <p style={{ color: "#adb5bd", fontSize: 15 }}>No images uploaded yet</p>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {images.map((image) => {
-                  const result = getResultForImage(image.id);
-                  return (
-                    <div key={image.id} style={{
-                      background: "#fff", borderRadius: 12, padding: 16,
-                      border: "1px solid #e9ecef", display: "flex", gap: 16, alignItems: "center",
-                    }}>
-                      {/* Thumbnail */}
-                      <div style={{
-                        width: 80, height: 80, borderRadius: 8, overflow: "hidden",
-                        background: "#f1f3f5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                      }}>
-                        <img src={image.thumbnail} alt={image.name}
-                          style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                      </div>
-
-                      {/* Info */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 600, fontSize: 14, color: "#1a1a2e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {image.name}
-                        </div>
-                        <div style={{ fontSize: 12, color: "#6c757d", marginTop: 2 }}>
-                          {image.width}x{image.height} | {formatFileSize(image.size)}
-                        </div>
-
-                        {result && (
-                          <div style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center" }}>
-                            <span style={{ fontSize: 12, color: "#6c757d" }}>→</span>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: "#1a1a2e" }}>
-                              {formatFileSize(result.compressed.size)}
-                            </span>
-                            <span style={{
-                              fontSize: 11, fontWeight: 700, padding: "2px 6px", borderRadius: 4,
-                              color: "#fff", background: getSavingsColor(result.compressed.savingsPercent),
-                            }}>
-                              {result.compressed.savingsPercent > 0 ? "-" : "+"}{Math.abs(result.compressed.savingsPercent)}%
-                            </span>
-                            <span style={{ fontSize: 11, color: "#adb5bd" }}>
-                              {result.processingTime}ms
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                        {result ? (
-                          <button onClick={() => downloadCompressedImage(result)}
-                            style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: "#0d6efd", color: "#fff", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
-                            Download
-                          </button>
-                        ) : (
-                          <button onClick={() => handleCompressSingle(image)}
-                            style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #dee2e6", background: "#fff", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
-                            Compress
-                          </button>
-                        )}
-                        <button onClick={() => removeImage(image.id)}
-                          style={{ padding: "6px 10px", borderRadius: 6, border: "1px solid #fecaca", background: "#fff5f5", color: "#dc3545", fontSize: 12, cursor: "pointer" }}>
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Summary */}
-            {results.length > 0 && (
-              <div style={{
-                marginTop: 16, background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e9ecef",
-                display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 16,
-              }}>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 12, color: "#6c757d", marginBottom: 4 }}>Original</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: "#1a1a2e" }}>{formatFileSize(totalOriginal)}</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 12, color: "#6c757d", marginBottom: 4 }}>Compressed</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: "#1a1a2e" }}>{formatFileSize(totalCompressed)}</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 12, color: "#6c757d", marginBottom: 4 }}>Saved</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: getSavingsColor(totalSavingsPercent) }}>
-                    {formatFileSize(Math.abs(totalSavings))}
-                  </div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 12, color: "#6c757d", marginBottom: 4 }}>Reduction</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: getSavingsColor(totalSavingsPercent) }}>
-                    {totalSavingsPercent > 0 ? "-" : ""}{Math.abs(totalSavingsPercent)}%
-                  </div>
-                </div>
-              </div>
-            )}
+            <label className="mb-1 block text-xs font-medium text-neutral-500">{t.imageCompressor.outputFormat}</label>
+            <div className="flex gap-2">
+              {(["jpeg", "png", "webp"] as const).map((f) => (
+                <button key={f}
+                  onClick={() => setFormat(f)}
+                  className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                    format === f
+                      ? "bg-brand-600 text-white"
+                      : "border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+                  }`}
+                >
+                  {f.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Sidebar Controls */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 24 }}>
-            <div style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e9ecef" }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 16px", color: "#1a1a2e" }}>Settings</h3>
-
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#495057", marginBottom: 6 }}>Output Format</label>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {FORMAT_OPTIONS.map((opt) => (
-                    <button key={opt.value}
-                      onClick={() => setConfig((c) => ({ ...c, format: opt.value }))}
-                      style={{
-                        flex: 1, padding: "8px 12px", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer",
-                        border: `2px solid ${config.format === opt.value ? "#0d6efd" : "#dee2e6"}`,
-                        background: config.format === opt.value ? "#e7f1ff" : "#fff",
-                        color: config.format === opt.value ? "#0d6efd" : "#495057",
-                      }}>{opt.label}</button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#495057", marginBottom: 6 }}>Preset</label>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {PRESET_OPTIONS.map((opt) => (
-                    <button key={opt.value}
-                      onClick={() => {
-                        setConfig((c) => ({ ...c, preset: opt.value }));
-                        if (opt.value === "web") setConfig((c) => ({ ...c, quality: 80 }));
-                        if (opt.value === "print") setConfig((c) => ({ ...c, quality: 95 }));
-                        if (opt.value === "maximum") setConfig((c) => ({ ...c, quality: 100 }));
-                        if (opt.value === "minimum") setConfig((c) => ({ ...c, quality: 50 }));
-                      }}
-                      style={{
-                        padding: "8px 12px", borderRadius: 6, fontSize: 13, cursor: "pointer", textAlign: "left",
-                        border: `2px solid ${config.preset === opt.value ? "#0d6efd" : "#dee2e6"}`,
-                        background: config.preset === opt.value ? "#e7f1ff" : "#fff",
-                      }}>
-                      <span style={{ fontWeight: 600, color: config.preset === opt.value ? "#0d6efd" : "#1a1a2e" }}>{opt.label}</span>
-                      <span style={{ fontSize: 11, color: "#6c757d", marginLeft: 6 }}>{opt.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {config.preset === "custom" && (
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#495057", marginBottom: 6 }}>
-                    Quality: {config.quality}%
-                  </label>
-                  <input type="range" min={1} max={100} step={1} value={config.quality}
-                    onChange={(e) => setConfig((c) => ({ ...c, quality: Number(e.target.value), preset: "custom" }))}
-                    style={{ width: "100%" }} />
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#adb5bd" }}>
-                    <span>Smaller</span><span>Better</span>
-                  </div>
-                </div>
-              )}
-
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, color: "#495057" }}>
-                  <input type="checkbox" checked={config.maintainExif ?? true}
-                    onChange={(e) => setConfig((c) => ({ ...c, maintainExif: e.target.checked }))} />
-                  <span>Maintain EXIF Data</span>
-                </label>
-              </div>
-
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 13, color: "#495057" }}>
-                  <input type="checkbox" checked={config.progressive ?? true}
-                    onChange={(e) => setConfig((c) => ({ ...c, progressive: e.target.checked }))} />
-                  <span>Progressive JPEG</span>
-                </label>
-              </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-neutral-500">{t.imageCompressor.qualityLabel.replace("{quality}", String(quality))}</label>
+            <input type="range" min={1} max={100} value={quality}
+              onChange={(e) => setQuality(Number(e.target.value))} className="w-full" />
+            <div className="flex justify-between text-xs text-neutral-400">
+              <span>{t.common.smaller}</span>
+              <span>{t.common.better}</span>
             </div>
+          </div>
 
-            {/* Actions */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <button onClick={handleCompress} disabled={images.length === 0 || processing}
-                style={{
-                  width: "100%", padding: "14px 20px", borderRadius: 8, border: "none",
-                  background: images.length > 0 && !processing ? "#0d6efd" : "#adb5bd",
-                  color: "#fff", fontWeight: 700, fontSize: 15, cursor: images.length > 0 && !processing ? "pointer" : "not-allowed",
-                }}>
-                {processing
-                  ? `Compressing ${progress.completed}/${progress.total}...`
-                  : `Compress All (${images.length})`}
+          <div className="flex items-end gap-2">
+            <button onClick={compressAll} disabled={images.length === 0 || processing}
+              className="flex-1 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
+              {processing
+                ? t.imageCompressor.compressingProgress.replace("{done}", String(progress.completed)).replace("{total}", String(progress.total))
+                : t.imageCompressor.compressAll.replace("{count}", String(images.length))}
+            </button>
+            {results.size > 0 && (
+              <button onClick={downloadAll}
+                className="rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700">
+                {t.imageCompressor.downloadAll}
               </button>
-
-              {results.length > 0 && (
-                <button onClick={() => downloadAllCompressed(results)}
-                  style={{
-                    width: "100%", padding: "12px 20px", borderRadius: 8, border: "2px solid #198754",
-                    background: "#fff", color: "#198754", fontWeight: 700, fontSize: 14, cursor: "pointer",
-                  }}>
-                  Download All ({results.length})
-                </button>
-              )}
-
-              {images.length > 0 && (
-                <button onClick={clearAll}
-                  style={{
-                    width: "100%", padding: "10px 20px", borderRadius: 8, border: "1px solid #dee2e6",
-                    background: "#fff", color: "#6c757d", fontWeight: 600, fontSize: 13, cursor: "pointer",
-                  }}>
-                  Clear All
-                </button>
-              )}
-            </div>
-
-            {/* Processing indicator */}
-            {processing && (
-              <div style={{ background: "#e7f1ff", borderRadius: 8, padding: 12 }}>
-                <div style={{ height: 4, background: "#dee2e6", borderRadius: 2, overflow: "hidden" }}>
-                  <div style={{
-                    height: "100%", background: "#0d6efd", borderRadius: 2,
-                    width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%`,
-                    transition: "width 0.3s",
-                  }} />
-                </div>
-                <div style={{ fontSize: 12, color: "#0d6efd", marginTop: 6, textAlign: "center" }}>
-                  Processing {progress.completed} of {progress.total}...
-                </div>
-              </div>
             )}
           </div>
         </div>
-      </div>
 
-      <style>{`
-        @media (max-width: 768px) {
-          div[style*="grid-template-columns: 1fr 340px"] { grid-template-columns: 1fr !important; }
-          div[style*="grid-template-columns: 1fr 1fr 1fr 1fr"] { grid-template-columns: 1fr 1fr !important; }
-        }
-      `}</style>
-    </div>
+        {processing && (
+          <div className="rounded-lg bg-brand-50 p-3 dark:bg-brand-900/20">
+            <div className="h-2 overflow-hidden rounded-full bg-brand-200 dark:bg-brand-800">
+              <div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${(progress.completed / progress.total) * 100}%` }} />
+            </div>
+            <p className="mt-1 text-center text-xs text-brand-600 dark:text-brand-400">
+              {t.imageCompressor.processing.replace("{done}", String(progress.completed)).replace("{total}", String(progress.total))}
+            </p>
+          </div>
+        )}
+
+        {images.length === 0 ? (
+          <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-12 text-center dark:border-neutral-700 dark:bg-neutral-800">
+            <p className="text-neutral-400">{t.imageCompressor.noImagesUploaded}</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {images.map((img) => {
+              const result = results.get(img.id);
+              return (
+                <div key={img.id} className="flex items-center gap-4 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-800">
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-neutral-100">
+                    <img src={img.dataUrl} alt={img.name} className="h-full w-full object-contain" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-neutral-900 dark:text-white">{img.name}</p>
+                    <p className="text-xs text-neutral-500">{img.width}×{img.height} | {formatFileSize(img.size)}</p>
+                    {result && (
+                      <div className="mt-1 flex items-center gap-2 text-xs">
+                        <span className="text-neutral-400">→ {formatFileSize(result.size)}</span>
+                        <span className={`rounded px-1.5 py-0.5 font-bold text-white`} style={{ background: getSavingsColor(result.savingsPercent) }}>
+                          {result.savingsPercent > 0 ? "-" : "+"}{Math.abs(result.savingsPercent)}%
+                        </span>
+                        <span className="text-neutral-400">{result.processingTime}ms</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    {result ? (
+                      <button onClick={() => downloadImage(result, img.name)}
+                        className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700">
+                        {t.common.download}
+                      </button>
+                    ) : (
+                      <button onClick={() => compressSingle(img).then((r) => setResults((prev) => new Map(prev).set(img.id, r)))}
+                        className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                        {t.imageCompressor.compress}
+                      </button>
+                    )}
+                    <button onClick={() => removeImage(img.id)}
+                      className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400">
+                      {t.common.remove}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {results.size > 0 && (
+          <div className="grid grid-cols-4 gap-4 rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800">
+            <div className="text-center">
+              <p className="text-xs text-neutral-500">{t.common.original}</p>
+              <p className="text-lg font-bold text-neutral-900 dark:text-white">{formatFileSize(totalOriginal)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-neutral-500">{t.common.compressed}</p>
+              <p className="text-lg font-bold text-neutral-900 dark:text-white">{formatFileSize(totalCompressed)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-neutral-500">{t.common.saved}</p>
+              <p className="text-lg font-bold" style={{ color: getSavingsColor(totalSavingsPercent) }}>{formatFileSize(Math.abs(totalSavings))}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-neutral-500">{t.common.reduction}</p>
+              <p className="text-lg font-bold" style={{ color: getSavingsColor(totalSavingsPercent) }}>
+                {totalSavingsPercent > 0 ? "-" : ""}{Math.abs(totalSavingsPercent)}%
+              </p>
+            </div>
+          </div>
+        )}
+
+        {images.length > 0 && (
+          <button onClick={clearAll}
+            className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:bg-neutral-800 dark:text-red-400">
+            {t.common.clearAll}
+          </button>
+        )}
+      </div>
+    </ToolLayout>
   );
 }

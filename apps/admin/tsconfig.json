@@ -13,6 +13,8 @@
     "allowJs": true,
     "incremental": true,
     "noImplicitAny": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "paths": {
       "@/*": [
         "./src/*"

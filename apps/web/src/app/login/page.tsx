@@ -3,9 +3,12 @@
 import { useState, FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/i18n";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { dict } = useI18n();
+  const t = dict.login;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +24,7 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      setError("Invalid email or password");
+      setError(t.invalidCredentials);
     } else {
       router.push("/");
     }
@@ -32,7 +35,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
         <div>
           <h2 className="text-center text-3xl font-bold text-gray-900">
-            Sign in to ToolNova
+            {t.title}
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -44,7 +47,7 @@ export default function LoginPage() {
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
+                {t.email}
               </label>
               <input
                 id="email"
@@ -53,12 +56,12 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-brand-600 sm:text-sm"
-                placeholder="you@example.com"
+                placeholder={t.emailPlaceholder}
               />
             </div>
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                {t.password}
               </label>
               <input
                 id="password"
@@ -67,7 +70,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-brand-600 sm:text-sm"
-                placeholder="Enter your password"
+                placeholder={t.passwordPlaceholder}
               />
             </div>
           </div>
@@ -75,7 +78,7 @@ export default function LoginPage() {
             type="submit"
             className="flex w-full justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2"
           >
-            Sign in
+            {t.submit}
           </button>
         </form>
       </div>

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
   const [totalUsages, uniqueIps, toolCount, popularTools] = await Promise.all([

@@ -12,5 +12,7 @@ coverage/
 next-env.d.ts
 *.db
 dev.log
+*.log
+*.err
 packages/database/src/generated/
 apps/admin/.env

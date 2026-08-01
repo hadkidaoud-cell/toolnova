@@ -1,114 +1,606 @@
-import { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "ToolNova - Every Tool. One Place.",
-  description:
-    "Discover hundreds of free online tools. Image editors, text processors, calculators, converters, and more. No signup required.",
+import * as React from "react";
+import Link from "next/link";
+import {
+  Search,
+  ArrowRight,
+  Check,
+  Zap,
+  Globe,
+  Code,
+  Image,
+  FileText,
+  FileArchive,
+  FileImage,
+  Scissors,
+  Calculator,
+  RefreshCw,
+  Sparkles,
+  ChevronDown,
+  BarChart3,
+  Users,
+  Activity,
+  Mail,
+} from "lucide-react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/i18n";
+
+const FEATURED_TOOL_META: Record<string, { icon: React.ElementType; gradient: string }> = {
+  "qr-code-generator": { icon: Zap, gradient: "from-purple-500 to-pink-500" },
+  "image-compressor": { icon: Image, gradient: "from-green-500 to-emerald-500" },
+  "pdf-merger": { icon: FileText, gradient: "from-red-500 to-orange-500" },
+  "pdf-compressor": { icon: FileArchive, gradient: "from-rose-500 to-red-500" },
+  "image-to-pdf": { icon: FileImage, gradient: "from-orange-500 to-amber-500" },
+  "pdf-splitter": { icon: Scissors, gradient: "from-red-500 to-rose-500" },
+  "resume-builder": { icon: FileText, gradient: "from-blue-500 to-cyan-500" },
+  "word-counter": { icon: Code, gradient: "from-amber-500 to-yellow-500" },
+  "json-formatter": { icon: Code, gradient: "from-indigo-500 to-violet-500" },
 };
 
-const PLACEHOLDER_TOOLS = [
-  { id: "qr-code-generator", name: "QR Code Generator", description: "Generate custom QR codes with colors and download as PNG or SVG", category: "Generator", icon: "📱" },
-  { id: "image-compressor", name: "Image Compressor", description: "Reduce image file size without losing quality", category: "Image", icon: "🖼" },
-  { id: "pdf-merger", name: "PDF Merger", description: "Merge multiple PDF files into one document", category: "Document", icon: "📄" },
-  { id: "resume-builder", name: "Resume Builder", description: "Create professional resumes with multiple templates", category: "Document", icon: "📝" },
-  { id: "word-counter", name: "Word Counter", description: "Count words, characters, and sentences in your text", category: "Text", icon: "🔢" },
-  { id: "json-formatter", name: "JSON Formatter", description: "Format and validate JSON data instantly", category: "Developer", icon: "{ }" },
+const CATEGORY_META: Record<string, { icon: React.ElementType; color: string; count: number }> = {
+  text: { icon: FileText, color: "from-blue-500 to-cyan-500", count: 24 },
+  image: { icon: Image, color: "from-green-500 to-emerald-500", count: 18 },
+  developer: { icon: Code, color: "from-indigo-500 to-violet-500", count: 32 },
+  calculation: { icon: Calculator, color: "from-amber-500 to-yellow-500", count: 15 },
+  converter: { icon: RefreshCw, color: "from-purple-500 to-pink-500", count: 21 },
+  generator: { icon: Sparkles, color: "from-red-500 to-orange-500", count: 12 },
+};
+
+const STAT_META = [
+  { value: 500, suffix: "+", key: "tools" as const, icon: BarChart3 },
+  { value: 50, suffix: "K+", key: "users" as const, icon: Users },
+  { value: 180, suffix: "+", key: "countries" as const, icon: Globe },
+  { value: 99.9, suffix: "%", key: "uptime" as const, icon: Activity },
 ];
 
-const PLACEHOLDER_CATEGORIES = [
-  { id: "text", name: "Text Tools", description: "Text manipulation and formatting", count: 24, icon: "📝" },
-  { id: "image", name: "Image Tools", description: "Image editing and conversion", count: 18, icon: "🖼" },
-  { id: "developer", name: "Developer Tools", description: "Code utilities and formatters", count: 32, icon: "💻" },
-  { id: "calculation", name: "Calculators", description: "Math and financial calculators", count: 15, icon: "🔢" },
-  { id: "converter", name: "Converters", description: "Unit and data conversion tools", count: 21, icon: "🔄" },
-  { id: "generator", name: "Generators", description: "Random and auto-generated content", count: 12, icon: "⚡" },
+const PLAN_META = [
+  { price: "0", period: "/month", popular: false },
+  { price: "9", period: "/month", popular: true },
+  { price: "29", period: "/month", popular: false },
 ];
 
-const FAQ_ITEMS = [
-  {
-    question: "Is ToolNova free to use?",
-    answer: "Yes! All tools on ToolNova are completely free. No signup or credit card required.",
-  },
-  {
-    question: "Do I need to install anything?",
-    answer: "No. All tools work directly in your browser. No downloads or installations needed.",
-  },
-  {
-    question: "Is my data safe?",
-    answer: "Yes. We process everything in your browser. Your data never leaves your device.",
-  },
-  {
-    question: "Can I suggest a new tool?",
-    answer: "Absolutely! We love hearing from our users. Contact us with your suggestions.",
-  },
-];
+function AnimatedCounter({ value, suffix }: { value: number; suffix?: string }) {
+  const ref = React.useRef(null);
+  const isInView = useInView(ref, { once: true });
+  const [count, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!isInView) return;
+    let start = 0;
+    const duration = 2000;
+    const step = Math.ceil(value / (duration / 16));
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= value) {
+        setCount(value);
+        clearInterval(timer);
+      } else {
+        setCount(start);
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [isInView, value]);
+
+  return (
+    <span ref={ref}>
+      {count}{suffix}
+    </span>
+  );
+}
+
+function FloatingIcon({ icon: Icon, className }: { icon: React.ElementType; className?: string }) {
+  return (
+    <motion.div
+      className={cn(
+        "absolute flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-lg shadow-neutral-200/50 ring-1 ring-neutral-200/50 dark:bg-neutral-900 dark:shadow-neutral-900/50 dark:ring-neutral-700/50",
+        className
+      )}
+      animate={{
+        y: [0, -10, 0],
+        rotate: [0, 5, 0],
+      }}
+      transition={{
+        duration: 4,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    >
+      <Icon className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+    </motion.div>
+  );
+}
 
 function HeroSection() {
+  const { dict } = useI18n();
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 to-white dark:from-brand-950/20 dark:to-neutral-950">
-      <div className="container-toolnova py-24 sm:py-32 lg:py-40">
-        <div className="mx-auto max-w-4xl text-center">
-          <div className="mb-6 inline-flex items-center rounded-full border border-brand-200 bg-brand-100 px-4 py-1.5 text-sm font-medium text-brand-700 dark:border-brand-800 dark:bg-brand-900/30 dark:text-brand-300">
-            <span className="mr-2 h-2 w-2 rounded-full bg-brand-500" />
-            100+ Free Online Tools
-          </div>
-          <h1 className="text-4xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-6xl lg:text-7xl">
-            Every Tool.
+    <section className="relative overflow-hidden bg-gradient-to-b from-brand-50/50 via-white to-white pb-20 pt-24 dark:from-brand-950/10 dark:via-neutral-950 dark:to-neutral-950">
+      <div className="bg-grid absolute inset-0 opacity-40" />
+      <div className="absolute left-1/2 top-0 -translate-x-1/2">
+        <div className="h-[600px] w-[600px] rounded-full bg-gradient-to-b from-brand-500/10 to-transparent blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="relative">
+          <FloatingIcon icon={Zap} className="left-[10%] top-[10%] hidden lg:flex" />
+          <FloatingIcon icon={Code} className="right-[15%] top-[5%] hidden lg:flex" />
+          <FloatingIcon icon={Image} className="left-[5%] bottom-[20%] hidden lg:flex" />
+          <FloatingIcon icon={FileText} className="right-[10%] bottom-[15%] hidden lg:flex" />
+          <FloatingIcon icon={Calculator} className="left-[20%] bottom-[5%] hidden lg:flex" />
+          <FloatingIcon icon={RefreshCw} className="right-[20%] top-[20%] hidden lg:flex" />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mx-auto max-w-4xl text-center"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mb-8 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-sm font-medium text-brand-700 dark:border-brand-800/50 dark:bg-brand-900/20 dark:text-brand-300"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>{dict.home.badge}</span>
+          </motion.div>
+
+          <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
+            <span className="text-neutral-900 dark:text-white">{dict.home.heroTitle1}</span>
             <br />
-            <span className="text-brand-600">One Place.</span>
+            <span className="bg-gradient-to-r from-brand-500 via-brand-600 to-brand-500 bg-clip-text text-transparent">
+              {dict.home.heroTitle2}
+            </span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-neutral-600 dark:text-neutral-400 sm:text-xl">
-            Discover hundreds of free online tools. Image editors, text processors,
-            calculators, converters, and more. No signup required.
+
+          <p className="mx-auto mt-6 max-w-2xl text-balance text-lg leading-relaxed text-neutral-600 dark:text-neutral-400 sm:text-xl">
+            {dict.home.heroSubtitle}
           </p>
-          <div className="mt-10 flex items-center justify-center gap-4">
-            <a
-              href="#tools"
-              className="rounded-lg bg-brand-600 px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-10"
+          >
+            <div className="mx-auto max-w-xl">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400 rtl:left-auto rtl:right-4" />
+                <input
+                  type="text"
+                  placeholder={dict.home.searchPlaceholder}
+                  className="h-14 w-full rounded-2xl border border-neutral-200 bg-white pl-12 pr-4 text-base text-neutral-900 shadow-lg shadow-neutral-200/50 placeholder:text-neutral-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:shadow-neutral-900/50 dark:placeholder:text-neutral-500 rtl:pl-4 rtl:pr-12"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
+              <span className="text-neutral-500 dark:text-neutral-400">{dict.home.popular}</span>
+              {dict.home.featuredTools.slice(0, 4).map((term) => (
+                <button
+                  key={term.id}
+                  className="rounded-full border border-neutral-200 bg-neutral-100/50 px-3 py-1 text-xs font-medium text-neutral-600 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400 dark:hover:border-brand-600 dark:hover:bg-brand-900/20 dark:hover:text-brand-300"
+                >
+                  {term.name}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mt-10 flex items-center justify-center gap-4"
+          >
+            <Link href="#tools">
+              <Button size="lg" className="h-12 px-8 text-base">
+                {dict.home.startFree}
+                <ArrowRight className="ml-2 h-4 w-4 rtl:ml-0 rtl:mr-2 rtl:rotate-180" />
+              </Button>
+            </Link>
+            <Link href="/pricing">
+              <Button variant="outline" size="lg" className="h-12 px-8 text-base">
+                {dict.home.viewPricing}
+              </Button>
+            </Link>
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function StatsSection() {
+  const { dict } = useI18n();
+  return (
+    <section className="border-y border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+          {STAT_META.map((stat, i) => (
+            <motion.div
+              key={stat.key}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="flex flex-col items-center gap-2 text-center"
             >
-              Explore Tools
-            </a>
-            <a
-              href="#how-it-works"
-              className="rounded-lg border border-neutral-300 bg-white px-6 py-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-            >
-              How It Works
-            </a>
-          </div>
+              <stat.icon className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+              <div className="text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl">
+                <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+              </div>
+              <div className="text-sm text-neutral-500 dark:text-neutral-400">{dict.home.stats[stat.key]}</div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function SearchSection() {
+function FeaturedToolsSection() {
+  const { dict } = useI18n();
   return (
-    <section className="py-12">
-      <div className="container-toolnova">
-        <div className="mx-auto max-w-2xl">
-          <div className="relative">
+    <section id="tools" className="bg-neutral-50/50 py-20 dark:bg-neutral-900/20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center"
+        >
+          <Badge variant="secondary" className="mb-4">{dict.home.featuredBadge}</Badge>
+          <h2 className="text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl">
+            {dict.home.featuredTitle}
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-neutral-600 dark:text-neutral-400">
+            {dict.home.featuredSubtitle}
+          </p>
+        </motion.div>
+
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {dict.home.featuredTools.map((tool, i) => {
+            const meta = FEATURED_TOOL_META[tool.id];
+            const Icon = meta?.icon ?? FileText;
+            return (
+              <motion.div
+                key={tool.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -4 }}
+              >
+                <Link
+                  href={`/tools/${tool.id}`}
+                  className="group relative block rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:border-brand-200 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-brand-700"
+                >
+                  <div className="mb-4 flex items-center gap-3">
+                    <div
+                      className={cn(
+                        "flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm",
+                        meta?.gradient ?? "from-brand-500 to-brand-600"
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <Badge variant="secondary" className="text-xs">{tool.category}</Badge>
+                  </div>
+                  <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-400">
+                    {tool.name}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+                    {tool.description}
+                  </p>
+                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-brand-600 dark:text-brand-400">
+                    {dict.toolLayout.useTool}
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CategoriesSection() {
+  const { dict } = useI18n();
+  return (
+    <section className="py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center"
+        >
+          <Badge variant="secondary" className="mb-4">{dict.home.categoriesBadge}</Badge>
+          <h2 className="text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl">
+            {dict.home.categoriesTitle}
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-neutral-600 dark:text-neutral-400">
+            {dict.home.categoriesSubtitle}
+          </p>
+        </motion.div>
+
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {dict.home.categories.map((cat, i) => {
+            const meta = CATEGORY_META[cat.id];
+            const Icon = meta?.icon ?? FileText;
+            return (
+              <motion.div
+                key={cat.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -2 }}
+              >
+                <Link
+                  href={`/category/${cat.id}`}
+                  className="group flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:border-brand-200 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-brand-700"
+                >
+                  <div
+                    className={cn(
+                      "flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm",
+                      meta?.color ?? "from-brand-500 to-brand-600"
+                    )}
+                  >
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-neutral-900 group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-400">
+                      {cat.name}
+                    </h3>
+                    <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
+                      {meta?.count ?? 0} {dict.home.toolsSuffix}
+                    </p>
+                  </div>
+                  <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600 dark:group-hover:text-brand-400 rtl:rotate-180" />
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorksSection() {
+  const { dict } = useI18n();
+  const steps = dict.home.steps.map((step, i) => ({
+    number: `0${i + 1}`,
+    title: step.title,
+    description: step.description,
+    icon: [Search, FileText, Zap][i] ?? Zap,
+  }));
+
+  return (
+    <section className="border-t border-neutral-200 bg-neutral-50/50 py-20 dark:border-neutral-800 dark:bg-neutral-900/20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center"
+        >
+          <Badge variant="secondary" className="mb-4">{dict.home.howBadge}</Badge>
+          <h2 className="text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl">
+            {dict.home.howTitle}
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-neutral-600 dark:text-neutral-400">
+            {dict.home.howSubtitle}
+          </p>
+        </motion.div>
+
+        <div className="mt-16 grid gap-8 md:grid-cols-3">
+          {steps.map((step, i) => (
+            <motion.div
+              key={step.number}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.15 }}
+              className="relative text-center"
+            >
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-lg shadow-brand-500/25">
+                <step.icon className="h-6 w-6" />
+              </div>
+              <div className="mt-4 text-sm font-bold text-brand-600 dark:text-brand-400">{step.number}</div>
+              <h3 className="mt-2 text-xl font-semibold text-neutral-900 dark:text-white">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{step.description}</p>
+              {i < steps.length - 1 && (
+                <div className="absolute right-0 top-8 hidden md:block">
+                  <ArrowRight className="h-6 w-6 text-neutral-300 dark:text-neutral-600 rtl:rotate-180" />
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PricingPreview() {
+  const { dict } = useI18n();
+  const plans = dict.home.plans.map((plan, i) => ({
+    ...plan,
+    price: PLAN_META[i]?.price ?? "0",
+    period: PLAN_META[i]?.period ?? "/month",
+    popular: PLAN_META[i]?.popular ?? false,
+  }));
+
+  return (
+    <section className="py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center"
+        >
+          <Badge variant="secondary" className="mb-4">{dict.home.pricingBadge}</Badge>
+          <h2 className="text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl">
+            {dict.home.pricingTitle}
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-neutral-600 dark:text-neutral-400">
+            {dict.home.pricingSubtitle}
+          </p>
+        </motion.div>
+
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          {plans.map((plan, i) => (
+            <motion.div
+              key={plan.name}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className={cn(
+                "relative rounded-2xl border p-8 shadow-sm transition-all",
+                plan.popular
+                  ? "border-brand-500 bg-white shadow-xl shadow-brand-500/10 dark:border-brand-600 dark:bg-neutral-900"
+                  : "border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+              )}
+            >
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge>{dict.home.mostPopular}</Badge>
+                </div>
+              )}
+              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">{plan.name}</h3>
+              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{plan.description}</p>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-4xl font-bold text-neutral-900 dark:text-white">${plan.price}</span>
+                <span className="text-sm text-neutral-500 dark:text-neutral-400">{plan.period}</span>
+              </div>
+              <ul className="mt-6 space-y-3">
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+                    <Check className="h-4 w-4 shrink-0 text-brand-600 dark:text-brand-400" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/pricing">
+                <Button
+                  className={cn("mt-8 w-full", plan.popular ? "" : "variant-outline")}
+                  variant={plan.popular ? "default" : "outline"}
+                >
+                  {plan.cta}
+                </Button>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="mt-10 text-center"
+        >
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+          >
+            {dict.home.viewAllPlans}
+            <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+          </Link>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function FAQSection() {
+  const { dict } = useI18n();
+  const [openIndex, setOpenIndex] = React.useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  const filtered = dict.home.faqItems.filter(
+    (item) =>
+      item.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.a.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <section className="border-t border-neutral-200 bg-neutral-50/50 py-20 dark:border-neutral-800 dark:bg-neutral-900/20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center"
+        >
+          <Badge variant="secondary" className="mb-4">{dict.home.faqBadge}</Badge>
+          <h2 className="text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl">
+            {dict.home.faqTitle}
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-neutral-600 dark:text-neutral-400">
+            {dict.home.faqSubtitle}
+          </p>
+        </motion.div>
+
+        <div className="mx-auto mt-10 max-w-2xl">
+          <div className="relative mb-8">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 rtl:left-auto rtl:right-3" />
             <input
               type="text"
-              placeholder="Search for tools..."
-              className="w-full rounded-xl border border-neutral-300 bg-white px-5 py-4 pl-12 text-lg shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-neutral-600 dark:bg-neutral-900 dark:text-white dark:placeholder-neutral-400"
+              placeholder={dict.home.searchFaq}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-10 w-full rounded-lg border border-neutral-200 bg-white pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:placeholder:text-neutral-500 rtl:pl-3 rtl:pr-9"
             />
-            <svg
-              className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
           </div>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {["JSON Formatter", "Word Counter", "Password Generator", "UUID Generator"].map((term) => (
-              <span
-                key={term}
-                className="cursor-pointer rounded-full border border-neutral-200 bg-neutral-100 px-3 py-1 text-sm text-neutral-600 hover:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
+
+          <div className="space-y-2">
+            {filtered.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05 }}
+                className="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
               >
-                {term}
-              </span>
+                <button
+                  onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                  className="flex w-full items-center justify-between px-6 py-4 text-left text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50 dark:text-white dark:hover:bg-neutral-800/50"
+                >
+                  {item.q}
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-neutral-500 transition-transform duration-200",
+                      openIndex === i && "rotate-180"
+                    )}
+                  />
+                </button>
+                <AnimatePresence>
+                  {openIndex === i && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="border-t border-neutral-100 px-6 py-4 text-sm leading-relaxed text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
+                        {item.a}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -117,232 +609,70 @@ function SearchSection() {
   );
 }
 
-function ToolsGrid({ title, tools }: { title: string; tools: typeof PLACEHOLDER_TOOLS }) {
-  return (
-    <section id="tools" className="py-16">
-      <div className="container-toolnova">
-        <h2 className="text-2xl font-bold text-neutral-900 dark:text-white sm:text-3xl">{title}</h2>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tools.map((tool) => (
-            <a
-              key={tool.id}
-              href={`/tools/${tool.id}`}
-              className="group rounded-xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-brand-200 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-brand-600"
-            >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
-                <span className="text-lg font-bold">{tool.icon}</span>
-              </div>
-              <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-400">
-                {tool.name}
-              </h3>
-              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{tool.description}</p>
-              <span className="mt-4 inline-block text-sm font-medium text-brand-600 dark:text-brand-400">
-                Use Tool →
-              </span>
-            </a>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CategoriesSection() {
-  return (
-    <section className="bg-neutral-50 py-16 dark:bg-neutral-900/50">
-      <div className="container-toolnova">
-        <h2 className="text-2xl font-bold text-neutral-900 dark:text-white sm:text-3xl">Browse by Category</h2>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PLACEHOLDER_CATEGORIES.map((cat) => (
-            <a
-              key={cat.id}
-              href={`/category/${cat.id}`}
-              className="group flex items-center gap-4 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-brand-200 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-brand-600"
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-100 text-2xl dark:bg-brand-900/30">
-                {cat.icon}
-              </div>
-              <div>
-                <h3 className="font-semibold text-neutral-900 group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-400">
-                  {cat.name}
-                </h3>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">{cat.count} tools</p>
-              </div>
-            </a>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function StatsSection() {
-  const stats = [
-    { label: "Tools Available", value: "100+" },
-    { label: "Monthly Users", value: "50K+" },
-    { label: "Countries Served", value: "180+" },
-    { label: "Uptime", value: "99.9%" },
-  ];
-
-  return (
-    <section className="py-16">
-      <div className="container-toolnova">
-        <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="text-3xl font-bold text-brand-600 dark:text-brand-400 sm:text-4xl">
-                {stat.value}
-              </div>
-              <div className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HowItWorksSection() {
-  const steps = [
-    { step: "1", title: "Choose a Tool", description: "Browse our collection or search for what you need." },
-    { step: "2", title: "Enter Your Data", description: "Input your text, files, or settings into the tool." },
-    { step: "3", title: "Get Results", description: "Instantly get your results. Copy, download, or share." },
-  ];
-
-  return (
-    <section id="how-it-works" className="bg-neutral-50 py-16 dark:bg-neutral-900/50">
-      <div className="container-toolnova">
-        <h2 className="text-center text-2xl font-bold text-neutral-900 dark:text-white sm:text-3xl">
-          How It Works
-        </h2>
-        <div className="mt-12 grid gap-8 sm:grid-cols-3">
-          {steps.map((step) => (
-            <div key={step.step} className="text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-brand-600 text-lg font-bold text-white">
-                {step.step}
-              </div>
-              <h3 className="mt-4 text-lg font-semibold text-neutral-900 dark:text-white">{step.title}</h3>
-              <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{step.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FAQSection() {
-  return (
-    <section className="py-16">
-      <div className="container-toolnova">
-        <h2 className="text-center text-2xl font-bold text-neutral-900 dark:text-white sm:text-3xl">
-          Frequently Asked Questions
-        </h2>
-        <div className="mx-auto mt-12 max-w-2xl divide-y divide-neutral-200 dark:divide-neutral-700">
-          {FAQ_ITEMS.map((item) => (
-            <details key={item.question} className="group py-4">
-              <summary className="flex cursor-pointer items-center justify-between text-left text-lg font-medium text-neutral-900 dark:text-white">
-                {item.question}
-                <span className="ml-4 shrink-0 text-neutral-400 transition-transform group-open:rotate-180">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </span>
-              </summary>
-              <p className="mt-3 text-neutral-600 dark:text-neutral-400">{item.answer}</p>
-            </details>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function NewsletterSection() {
-  return (
-    <section className="bg-brand-600 py-16">
-      <div className="container-toolnova text-center">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl">Stay Updated</h2>
-        <p className="mx-auto mt-3 max-w-md text-brand-100">
-          Get notified when we add new tools and features.
-        </p>
-        <form className="mx-auto mt-8 flex max-w-md gap-3">
-          <input
-            type="email"
-            placeholder="Enter your email"
-            className="flex-1 rounded-lg border border-transparent px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-white"
-          />
-          <button
-            type="submit"
-            className="rounded-lg bg-neutral-900 px-6 py-3 text-sm font-medium text-white hover:bg-neutral-800"
-          >
-            Subscribe
-          </button>
-        </form>
-      </div>
-    </section>
-  );
-}
+  const { dict } = useI18n();
+  const [email, setEmail] = React.useState("");
 
-function Footer() {
-  const links = {
-    Product: ["All Tools", "Categories", "Featured", "New Tools"],
-    Company: ["About", "Blog", "Careers", "Contact"],
-    Legal: ["Privacy", "Terms", "Cookies"],
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmail("");
   };
 
   return (
-    <footer className="border-t border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
-      <div className="container-toolnova py-12">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="lg:col-span-2">
-            <h3 className="text-xl font-bold text-neutral-900 dark:text-white">
-              Tool<span className="text-brand-600">Nova</span>
-            </h3>
-            <p className="mt-3 max-w-xs text-sm text-neutral-600 dark:text-neutral-400">
-              Every tool you need, in one place. Free, fast, and easy to use.
-            </p>
+    <section className="relative overflow-hidden py-20">
+      <div className="absolute inset-0 bg-gradient-to-r from-brand-600 to-brand-700" />
+      <div className="absolute inset-0 bg-grid opacity-10" />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mx-auto max-w-2xl text-center"
+        >
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white">
+            <Mail className="h-3.5 w-3.5" />
+            <span>{dict.home.newsletterBadge}</span>
           </div>
-          {Object.entries(links).map(([category, items]) => (
-            <div key={category}>
-              <h4 className="text-sm font-semibold text-neutral-900 dark:text-white">{category}</h4>
-              <ul className="mt-4 space-y-2">
-                {items.map((item) => (
-                  <li key={item}>
-                    <a
-                      href="#"
-                      className="text-sm text-neutral-600 hover:text-brand-600 dark:text-neutral-400 dark:hover:text-brand-400"
-                    >
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="mt-12 border-t border-neutral-200 pt-8 text-center text-sm text-neutral-500 dark:border-neutral-800">
-          © {new Date().getFullYear()} ToolNova. All rights reserved.
-        </div>
+          <h2 className="text-3xl font-bold text-white sm:text-4xl">{dict.home.newsletterTitle}</h2>
+          <p className="mx-auto mt-3 max-w-md text-brand-100">
+            {dict.home.newsletterSubtitle}
+          </p>
+          <form onSubmit={handleSubmit} className="mx-auto mt-8 flex max-w-md gap-3">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={dict.home.emailPlaceholder}
+              required
+              className="h-12 flex-1 rounded-xl border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-brand-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+            />
+            <Button
+              type="submit"
+              variant="secondary"
+              size="lg"
+              className="h-12 shrink-0 bg-white text-brand-700 hover:bg-brand-50"
+            >
+              {dict.home.subscribe}
+              <ArrowRight className="ml-2 h-4 w-4 rtl:ml-0 rtl:mr-2 rtl:rotate-180" />
+            </Button>
+          </form>
+        </motion.div>
       </div>
-    </footer>
+    </section>
   );
 }
 
 export default function HomePage() {
   return (
-    <main>
+    <>
       <HeroSection />
-      <SearchSection />
-      <ToolsGrid title="Popular Tools" tools={PLACEHOLDER_TOOLS} />
-      <ToolsGrid title="Featured Tools" tools={[...PLACEHOLDER_TOOLS].reverse()} />
-      <CategoriesSection />
-      <ToolsGrid title="Latest Tools" tools={PLACEHOLDER_TOOLS.slice(0, 3)} />
       <StatsSection />
+      <FeaturedToolsSection />
+      <CategoriesSection />
       <HowItWorksSection />
+      <PricingPreview />
       <FAQSection />
       <NewsletterSection />
-      <Footer />
-    </main>
+    </>
   );
 }

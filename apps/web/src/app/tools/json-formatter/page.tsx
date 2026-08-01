@@ -1,28 +1,20 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef, ReactNode } from "react";
 import { ToolLayout } from "@/components/tool/tool-layout";
+import { useI18n } from "@/i18n";
+import { Code } from "lucide-react";
 
-const TOOL = {
-  slug: "json-formatter",
-  name: "JSON Formatter",
-  description: "Format, validate, and minify your JSON data with an interactive tree viewer.",
-  longDescription:
-    "Our JSON Formatter and Validator helps you format, validate, and minify JSON data. It includes a collapsible tree view that lets you explore the structure of your JSON, making it easy to debug and understand complex data. Simply paste your JSON and click Format to see it beautifully structured.",
-  category: "Developer Tools",
-  categorySlug: "developer",
-  icon: "{",
-  breadcrumbs: [
-    { label: "Developer Tools", href: "/category/developer" },
-    { label: "JSON Formatter", href: "/tools/json-formatter" },
-  ],
+const RELATED_SLUGS = ["uuid-generator", "password-generator", "qr-code-generator"] as const;
+
+const RELATED_ICONS: Record<string, string> = {
+  "uuid-generator": "U",
+  "password-generator": "K",
+  "qr-code-generator": "▦",
 };
 
-const RELATED_TOOLS = [
-  { slug: "xml-formatter", name: "XML Formatter", description: "Format and validate XML data", icon: ">" },
-  { slug: "html-formatter", name: "HTML Formatter", description: "Format and beautify HTML code", icon: "<" },
-  { slug: "css-minifier", name: "CSS Minifier", description: "Minify and compress CSS", icon: "#" },
-];
+const LONG_DESCRIPTION =
+  "Our JSON Formatter and Validator helps you format, validate, and minify JSON data. It includes a collapsible tree view that lets you explore the structure of your JSON, making it easy to debug and understand complex data. Simply paste your JSON and click Format to see it beautifully structured.";
 
 const FAQ = [
   {
@@ -38,8 +30,8 @@ const FAQ = [
     answer: "Common issues include: trailing commas, missing quotes around keys, using single quotes instead of double quotes, unescaped control characters, and duplicate keys. Our validator will point out the exact error.",
   },
   {
-    question: "Is there a size limit?",
-    answer: "You can validate and format up to 1MB of JSON text at a time. For larger files, we recommend splitting them into smaller chunks.",
+    question: "Can I download formatted JSON?",
+    answer: "Yes! After formatting, you can download the result as a .json file or copy it to your clipboard.",
   },
 ];
 
@@ -49,7 +41,7 @@ const ARTICLE = {
     "JSON is the most widely used data format for APIs and configuration files. It supports primitive types like strings, numbers, booleans, and null, as well as complex types like objects (key-value pairs) and arrays (ordered lists). Properly formatted JSON is essential for debugging API responses and maintaining configuration files. Our tool helps you quickly validate and format JSON to ensure it's error-free and readable.",
 };
 
-function JsonNode({ data, indent = 0 }: { data: unknown; indent?: number }) {
+function JsonNode({ data, indent = 0 }: { data: unknown; indent?: number }): ReactNode {
   const [collapsed, setCollapsed] = useState(false);
   const isObject = data !== null && typeof data === "object";
   const isArray = Array.isArray(data);
@@ -109,37 +101,87 @@ function JsonNode({ data, indent = 0 }: { data: unknown; indent?: number }) {
 }
 
 export default function JsonFormatterPage() {
+  const { dict } = useI18n();
+  const t = dict.tools;
+  const category = t.categories.developer;
+  const meta = t.meta["json-formatter"];
+
+  const tool = {
+    name: meta.name,
+    description: meta.description,
+    longDescription: LONG_DESCRIPTION,
+    category,
+    categorySlug: "developer",
+    icon: <Code className="h-6 w-6" />,
+    breadcrumbs: [
+      { label: category, href: "/category/developer" },
+      { label: meta.name, href: "/tools/json-formatter" },
+    ],
+  };
+
+  const relatedTools = RELATED_SLUGS.map((slug) => ({
+    slug,
+    name: t.meta[slug].name,
+    description: t.meta[slug].short,
+    icon: RELATED_ICONS[slug] ?? "+",
+  }));
+
   const [input, setInput] = useState("");
   const [parsed, setParsed] = useState<unknown | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [errorLine, setErrorLine] = useState<number | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const formattedJson = useMemo(() => {
     if (parsed === null) return "";
     return JSON.stringify(parsed, null, 2);
   }, [parsed]);
 
-  const minifiedJson = useMemo(() => {
-    if (parsed === null) return "";
-    return JSON.stringify(parsed);
-  }, [parsed]);
+  const parseJson = useCallback((value: string) => {
+    setError("");
+    setErrorLine(null);
+    setParsed(null);
+    const trimmed = value.trim();
+    if (!trimmed) { setError(t.jsonFormatter.enterJsonToFormat); return null; }
+    try {
+      const p = JSON.parse(trimmed);
+      return p;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : t.jsonFormatter.invalidJson;
+      const lineMatch = msg.match(/at position (\d+)/) || msg.match(/position (\d+)/);
+      if (lineMatch && lineMatch[1]) {
+        const pos = parseInt(lineMatch[1], 10);
+        const lines = trimmed.substring(0, pos).split("\n");
+        setErrorLine(lines.length);
+      }
+      setError(msg);
+      return null;
+    }
+  }, [t]);
 
   const formatJson = useCallback(() => {
-    setError("");
-    setParsed(null);
-    try {
-      const trimmed = input.trim();
-      if (!trimmed) { setError("Please enter JSON to format"); return; }
-      const p = JSON.parse(trimmed);
-      setParsed(p);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid JSON");
-    }
-  }, [input]);
+    const p = parseJson(input);
+    if (p !== null) setParsed(p);
+  }, [input, parseJson]);
 
   const minifyJson = useCallback(() => {
-    formatJson();
-  }, [formatJson]);
+    const p = parseJson(input);
+    if (p !== null) {
+      setParsed(p);
+    }
+  }, [input, parseJson]);
+
+  const validateJson = useCallback(() => {
+    setParsed(null);
+    try {
+      const p = JSON.parse(input.trim());
+      setError(t.jsonFormatter.validJson);
+      setTimeout(() => setError(""), 2000);
+    } catch {
+      setError(t.jsonFormatter.invalidJson);
+    }
+  }, [input, t]);
 
   const copyToClipboard = useCallback(async (text: string) => {
     try {
@@ -149,28 +191,39 @@ export default function JsonFormatterPage() {
     } catch { }
   }, []);
 
+  const downloadJson = useCallback(() => {
+    const blob = new Blob([formattedJson], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "formatted.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [formattedJson]);
+
   return (
     <ToolLayout
-      name={TOOL.name}
-      description={TOOL.description}
-      longDescription={TOOL.longDescription}
-      category={TOOL.category}
-      categorySlug={TOOL.categorySlug}
-      breadcrumbs={TOOL.breadcrumbs}
-      icon={TOOL.icon}
+      name={tool.name}
+      description={tool.description}
+      longDescription={tool.longDescription}
+      category={tool.category}
+      categorySlug={tool.categorySlug}
+      breadcrumbs={tool.breadcrumbs}
+      icon={tool.icon}
       faq={FAQ}
       article={ARTICLE}
-      relatedTools={RELATED_TOOLS}
+      relatedTools={relatedTools}
     >
       <div className="space-y-6">
         <div>
           <label className="mb-2 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
-            Enter JSON
+            {t.jsonFormatter.enterJson}
           </label>
           <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder='Paste your JSON here, e.g. {"key": "value"}'
+            placeholder={t.jsonFormatter.pasteHere}
             rows={8}
             className="w-full rounded-lg border border-neutral-300 bg-white px-4 py-3 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white dark:placeholder-neutral-500"
           />
@@ -181,40 +234,58 @@ export default function JsonFormatterPage() {
             onClick={formatJson}
             className="rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
           >
-            Format
+            {t.jsonFormatter.format}
           </button>
           <button
             onClick={minifyJson}
             className="rounded-lg bg-neutral-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-500 focus:ring-offset-2 dark:bg-neutral-500 dark:hover:bg-neutral-400"
           >
-            Minify
+            {t.jsonFormatter.minify}
           </button>
           <button
-            onClick={() => copyToClipboard(formattedJson)}
-            disabled={!parsed}
+            onClick={validateJson}
+            disabled={!input.trim()}
             className="rounded-lg border border-neutral-300 bg-white px-6 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
           >
-            {copied ? "Copied!" : "Copy"}
+            {t.jsonFormatter.validate}
           </button>
+          <button
+            onClick={() => copyToClipboard(formattedJson || input)}
+            disabled={!input.trim()}
+            className="rounded-lg border border-neutral-300 bg-white px-6 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+          >
+            {copied ? t.common.copied : t.common.copy}
+          </button>
+          {parsed !== null && (
+            <button
+              onClick={downloadJson}
+              className="rounded-lg border border-neutral-300 bg-white px-6 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+            >
+              {t.jsonFormatter.downloadJson}
+            </button>
+          )}
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400">
+          <div className={`rounded-lg border p-4 text-sm ${error === t.jsonFormatter.validJson ? "border-green-300 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400" : "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-400"}`}>
             {error}
+            {errorLine !== null && (
+              <span className="ml-2 font-mono text-xs opacity-75">{t.jsonFormatter.nearLine.replace("{line}", String(errorLine))}</span>
+            )}
           </div>
         )}
 
-        {parsed && (
+        {parsed !== null && (
           <div className="space-y-4">
             <div>
-              <h3 className="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">Formatted JSON</h3>
+              <h3 className="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">{t.jsonFormatter.formattedJson}</h3>
               <pre className="overflow-x-auto rounded-lg border border-neutral-300 bg-neutral-50 p-4 font-mono text-sm dark:border-neutral-600 dark:bg-neutral-800">
                 {formattedJson}
               </pre>
             </div>
 
             <div>
-              <h3 className="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">Tree View</h3>
+              <h3 className="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">{t.jsonFormatter.treeView}</h3>
               <div className="rounded-lg border border-neutral-300 bg-neutral-50 p-4 dark:border-neutral-600 dark:bg-neutral-800">
                 <JsonNode data={parsed} />
               </div>

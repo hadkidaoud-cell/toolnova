@@ -1,6 +1,25 @@
 "use client";
 
 import { ReactNode, useState } from "react";
+import Link from "next/link";
+import {
+  ChevronRight,
+  Home,
+  Share2,
+  Heart,
+  Flag,
+  MessageCircle,
+  Globe,
+  Link2,
+  Check,
+  ArrowRight,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useI18n } from "@/i18n";
 
 export interface ToolLayoutProps {
   name: string;
@@ -9,7 +28,7 @@ export interface ToolLayoutProps {
   category: string;
   categorySlug: string;
   breadcrumbs: Array<{ label: string; href: string }>;
-  icon?: string;
+  icon?: string | ReactNode;
   children: ReactNode;
   settings?: ReactNode;
   faq?: Array<{ question: string; answer: string }>;
@@ -26,20 +45,24 @@ export interface ToolLayoutProps {
 }
 
 function Breadcrumb({ items }: { items: Array<{ label: string; href: string }> }) {
+  const { dict } = useI18n();
   return (
-    <nav aria-label="Breadcrumb" className="mb-6">
-      <ol className="flex items-center gap-1.5 text-sm">
+    <nav aria-label={dict.toolLayout.breadcrumb} className="mb-6">
+      <ol className="flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
         <li>
-          <a href="/" className="text-neutral-500 hover:text-brand-600 dark:text-neutral-400">
-            Home
-          </a>
+          <Link href="/" className="flex items-center gap-1 hover:text-brand-600 dark:hover:text-brand-400">
+            <Home className="h-3.5 w-3.5" />
+          </Link>
         </li>
         {items.map((item, index) => (
           <li key={index} className="flex items-center gap-1.5">
-            <span className="text-neutral-400">/</span>
-            <a href={item.href} className="text-neutral-500 hover:text-brand-600 dark:text-neutral-400">
+            <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
+            <Link
+              href={item.href}
+              className="hover:text-brand-600 dark:hover:text-brand-400"
+            >
               {item.label}
-            </a>
+            </Link>
           </li>
         ))}
       </ol>
@@ -50,31 +73,109 @@ function Breadcrumb({ items }: { items: Array<{ label: string; href: string }> }
 function ToolHeader({ name, description, icon, category, categorySlug }: {
   name: string;
   description: string;
-  icon?: string;
+  icon?: string | ReactNode;
   category: string;
   categorySlug: string;
 }) {
+  const [liked, setLiked] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const { dict } = useI18n();
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
   return (
     <div className="mb-8">
-      <div className="flex items-center gap-3 mb-3">
-        {icon && (
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
-            <span className="text-xl">{icon}</span>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-4">
+          {icon && (
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 text-xl text-white shadow-lg shadow-brand-500/20">
+              {icon}
+            </div>
+          )}
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant="secondary" className="text-xs">
+                <Link href={`/category/${categorySlug}`}>{category}</Link>
+              </Badge>
+            </div>
+            <h1 className="text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl">
+              {name}
+            </h1>
+            <p className="mt-1 text-base text-neutral-600 dark:text-neutral-400">
+              {description}
+            </p>
           </div>
-        )}
-        <a
-          href={`/category/${categorySlug}`}
-          className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
-        >
-          {category}
-        </a>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setLiked(!liked)}
+                  className={cn(liked && "border-red-200 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400")}
+                >
+                  <Heart className={cn("h-4 w-4", liked && "fill-current")} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{liked ? dict.toolLayout.saved : dict.toolLayout.saveTool}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={copyLink}>
+                  {copied ? <Check className="h-4 w-4 text-green-600" /> : <Link2 className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{copied ? dict.toolLayout.copied : dict.toolLayout.copyLink}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={() => window.open(`https://x.com/intent/tweet?url=${encodeURIComponent(shareUrl)}`, "_blank")}>
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{dict.toolLayout.shareOnX}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={() => window.open(`https://facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank")}>
+                  <Globe className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{dict.toolLayout.shareOnFacebook}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Flag className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{dict.toolLayout.reportIssue}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
-      <h1 className="text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl">
-        {name}
-      </h1>
-      <p className="mt-3 text-lg text-neutral-600 dark:text-neutral-400">
-        {description}
-      </p>
     </div>
   );
 }
@@ -89,26 +190,40 @@ function ToolSection({ title, children, id }: { title: string; children: ReactNo
 }
 
 function RelatedTools({ tools }: { tools: Array<{ slug: string; name: string; description: string; icon?: string }> }) {
+  const { dict } = useI18n();
   return (
     <section className="mt-16 border-t border-neutral-200 pt-12 dark:border-neutral-800">
-      <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Related Tools</h2>
+      <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{dict.toolLayout.relatedTools}</h2>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {tools.map((tool) => (
-          <a
+        {tools.map((tool, i) => (
+          <motion.div
             key={tool.slug}
-            href={`/tools/${tool.slug}`}
-            className="group rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:border-brand-200 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:border-brand-600"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.05 }}
+            whileHover={{ y: -2 }}
           >
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
-              <span className="text-lg font-bold">{tool.icon || "+"}</span>
-            </div>
-            <h3 className="font-semibold text-neutral-900 group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-400">
-              {tool.name}
-            </h3>
-            <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-              {tool.description}
-            </p>
-          </a>
+            <Link
+              href={`/tools/${tool.slug}`}
+              className="group block rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:border-brand-200 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-brand-700"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/10 to-brand-600/10 text-sm font-bold text-brand-600 dark:from-brand-400/10 dark:to-brand-500/10 dark:text-brand-400">
+                  {tool.icon || "+"}
+                </div>
+                <h3 className="font-semibold text-neutral-900 group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-400">
+                  {tool.name}
+                </h3>
+              </div>
+              <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+                {tool.description}
+              </p>
+              <div className="mt-3 flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400">
+                {dict.toolLayout.useTool} <ArrowRight className="h-3 w-3" />
+              </div>
+            </Link>
+          </motion.div>
         ))}
       </div>
     </section>
@@ -116,22 +231,36 @@ function RelatedTools({ tools }: { tools: Array<{ slug: string; name: string; de
 }
 
 function FAQ({ items }: { items: Array<{ question: string; answer: string }> }) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const { dict } = useI18n();
+
   return (
     <section className="mt-16 border-t border-neutral-200 pt-12 dark:border-neutral-800">
-      <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">FAQ</h2>
-      <div className="mt-6 divide-y divide-neutral-200 dark:divide-neutral-700">
-        {items.map((item) => (
-          <details key={item.question} className="group py-4">
-            <summary className="flex cursor-pointer items-center justify-between text-left font-medium text-neutral-900 dark:text-white">
+      <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{dict.toolLayout.faq}</h2>
+      <div className="mt-6 space-y-2">
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+          >
+            <button
+              onClick={() => setOpenIndex(openIndex === i ? null : i)}
+              className="flex w-full items-center justify-between px-5 py-3.5 text-left text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50 dark:text-white dark:hover:bg-neutral-800/50"
+            >
               {item.question}
-              <span className="ml-4 shrink-0 text-neutral-400 transition-transform group-open:rotate-180">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </span>
-            </summary>
-            <p className="mt-3 text-neutral-600 dark:text-neutral-400">{item.answer}</p>
-          </details>
+              <ChevronRight
+                className={cn(
+                  "h-4 w-4 shrink-0 text-neutral-500 transition-transform duration-200",
+                  openIndex === i && "rotate-90"
+                )}
+              />
+            </button>
+            {openIndex === i && (
+              <div className="border-t border-neutral-100 px-5 py-3.5 text-sm leading-relaxed text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
+                {item.answer}
+              </div>
+            )}
+          </div>
         ))}
       </div>
     </section>
@@ -141,8 +270,7 @@ function FAQ({ items }: { items: Array<{ question: string; answer: string }> }) 
 function ArticleSection({ article }: { article: { title: string; content: string } }) {
   return (
     <section className="mt-16 border-t border-neutral-200 pt-12 dark:border-neutral-800">
-      <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{article.title}</h2>
-      <div className="mt-6 prose prose-neutral max-w-none dark:prose-invert prose-headings:text-neutral-900 prose-p:text-neutral-600 dark:prose-headings:text-white dark:prose-p:text-neutral-400">
+      <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{article.title}</h2>      <div className="mt-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
         <p>{article.content}</p>
       </div>
     </section>
@@ -150,18 +278,45 @@ function ArticleSection({ article }: { article: { title: string; content: string
 }
 
 function CommentsPlaceholder() {
+  const { dict } = useI18n();
   return (
     <section className="mt-16 border-t border-neutral-200 pt-12 dark:border-neutral-800">
-      <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Comments</h2>
-      <div className="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-8 text-center dark:border-neutral-700 dark:bg-neutral-900">
-        <svg className="mx-auto h-12 w-12 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-        <p className="mt-4 text-neutral-600 dark:text-neutral-400">
-          Comments coming soon. Be the first to share your thoughts!
+      <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{dict.toolLayout.comments}</h2>
+      <div className="mt-6 rounded-xl border border-neutral-200 bg-neutral-50 p-8 text-center dark:border-neutral-800 dark:bg-neutral-900/50">
+        <p className="text-neutral-600 dark:text-neutral-400">
+          {dict.toolLayout.commentsComingSoon}
         </p>
       </div>
     </section>
+  );
+}
+
+function Sidebar({ relatedTools }: { relatedTools?: Array<{ slug: string; name: string; description: string; icon?: string }> }) {
+  const { dict } = useI18n();
+  if (!relatedTools || relatedTools.length === 0) return null;
+
+  return (
+    <aside className="hidden xl:block w-72 shrink-0">
+      <div className="sticky top-24 space-y-4">
+        <div className="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+          <h3 className="mb-3 text-sm font-semibold text-neutral-900 dark:text-white">{dict.toolLayout.relatedTools}</h3>
+          <div className="space-y-2">
+            {relatedTools.slice(0, 5).map((tool) => (
+              <Link
+                key={tool.slug}
+                href={`/tools/${tool.slug}`}
+                className="flex items-center gap-3 rounded-lg p-2 text-sm text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-xs font-bold text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
+                  {tool.icon || "+"}
+                </div>
+                <span className="font-medium">{tool.name}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </aside>
   );
 }
 
@@ -179,49 +334,95 @@ export function ToolLayout({
   article,
   relatedTools,
 }: ToolLayoutProps) {
+  const { dict } = useI18n();
   return (
-    <main className="min-h-screen bg-white dark:bg-neutral-950">
-      <div className="container-toolnova py-8">
+    <div className="min-h-screen bg-white dark:bg-neutral-950">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <Breadcrumb items={breadcrumbs} />
 
-        <div className="mx-auto max-w-4xl">
-          <ToolHeader
-            name={name}
-            description={description}
-            icon={icon}
-            category={category}
-            categorySlug={categorySlug}
-          />
+        <div className="flex gap-8">
+          <div className="min-w-0 flex-1">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <ToolHeader
+                name={name}
+                description={description}
+                icon={icon}
+                category={category}
+                categorySlug={categorySlug}
+              />
+            </motion.div>
 
-          <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 sm:p-8">
-            {children}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 sm:p-8"
+            >
+              {children}
 
-            {settings && (
-              <ToolSection title="Settings" id="settings">
-                {settings}
-              </ToolSection>
+              {settings && (
+                <ToolSection title={dict.toolLayout.settings} id="settings">
+                  {settings}
+                </ToolSection>
+              )}
+            </motion.div>
+
+            {longDescription && (
+              <motion.section
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="mt-12"
+              >
+                <div className="rounded-2xl border border-neutral-200 bg-white p-8 dark:border-neutral-800 dark:bg-neutral-900">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{dict.toolLayout.aboutThisTool}</h2>
+                  <p className="mt-4 leading-relaxed text-neutral-600 dark:text-neutral-400">
+                    {longDescription}
+                  </p>
+                </div>
+              </motion.section>
             )}
+
+            {faq && faq.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                <FAQ items={faq} />
+              </motion.div>
+            )}
+
+            {article && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                <ArticleSection article={article} />
+              </motion.div>
+            )}
+
+            {relatedTools && relatedTools.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                <RelatedTools tools={relatedTools} />
+              </motion.div>
+            )}
+
+            <CommentsPlaceholder />
           </div>
 
-          {longDescription && (
-            <section className="mt-12">
-              <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">About This Tool</h2>
-              <p className="mt-4 text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                {longDescription}
-              </p>
-            </section>
-          )}
-
-          {faq && faq.length > 0 && <FAQ items={faq} />}
-          {article && <ArticleSection article={article} />}
-
-          {relatedTools && relatedTools.length > 0 && (
-            <RelatedTools tools={relatedTools} />
-          )}
-
-          <CommentsPlaceholder />
+          <Sidebar relatedTools={relatedTools} />
         </div>
       </div>
-    </main>
+    </div>
   );
 }

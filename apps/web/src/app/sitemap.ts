@@ -10,7 +10,8 @@ const staticRoutes = [
 const toolSlugs = [
   "word-counter", "json-formatter", "image-compressor", "uuid-generator",
   "password-generator", "color-picker", "qr-code-generator", "pdf-merger",
-  "resume-builder", "character-counter",
+  "pdf-compressor", "resume-builder", "character-counter",
+  "image-to-pdf", "pdf-splitter",
 ];
 
 const categorySlugs = [
