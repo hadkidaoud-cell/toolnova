@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { ToolLayout } from "@/components/tool/tool-layout";
 import { useI18n } from "@/i18n";
+import { computeDiff } from "@/lib/date-math";
 import { CalendarDays, ArrowLeftRight } from "lucide-react";
 
 const RELATED_SLUGS = ["age-calculator", "countdown-timer", "timezone-converter"] as const;
@@ -36,39 +37,6 @@ const ARTICLE = {
   content:
     "Dates are everywhere in planning: holidays, deadlines, anniversaries, and project milestones. Breaking a span into years, months, and days — or total days and weeks — makes comparisons and scheduling concrete. Our calculator does the calendar math for you instantly.",
 };
-
-interface DiffResult {
-  years: number;
-  months: number;
-  days: number;
-  totalDays: number;
-  totalWeeks: number;
-  valid: boolean;
-}
-
-function computeDiff(fromStr: string, toStr: string): DiffResult {
-  if (!fromStr || !toStr) return { years: 0, months: 0, days: 0, totalDays: 0, totalWeeks: 0, valid: false };
-  const from = new Date(fromStr + "T00:00:00Z");
-  const to = new Date(toStr + "T00:00:00Z");
-  if (isNaN(from.getTime()) || isNaN(to.getTime()) || from > to) {
-    return { years: 0, months: 0, days: 0, totalDays: 0, totalWeeks: 0, valid: false };
-  }
-  const totalDays = Math.round((to.getTime() - from.getTime()) / 86400000);
-  const totalWeeks = Math.floor(totalDays / 7);
-  let years = to.getUTCFullYear() - from.getUTCFullYear();
-  let months = to.getUTCMonth() - from.getUTCMonth();
-  let days = to.getUTCDate() - from.getUTCDate();
-  if (days < 0) {
-    months--;
-    const prevMonth = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 0));
-    days += prevMonth.getUTCDate();
-  }
-  if (months < 0) {
-    years--;
-    months += 12;
-  }
-  return { years, months, days, totalDays, totalWeeks, valid: true };
-}
 
 export default function DateDifferencePage() {
   const { dict } = useI18n();

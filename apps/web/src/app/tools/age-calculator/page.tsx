@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { ToolLayout } from "@/components/tool/tool-layout";
 import { useI18n } from "@/i18n";
+import { computeAge } from "@/lib/date-math";
 import { Cake } from "lucide-react";
 
 const RELATED_SLUGS = ["date-difference", "countdown-timer", "bmi-calculator"] as const;
@@ -36,45 +37,6 @@ const ARTICLE = {
   content:
     "A simple 'years old' number hides a lot of detail. Age in years, months, and days matters for milestones, eligibility windows, and legal documents. Our calculator handles all the calendar edge cases automatically.",
 };
-
-interface AgeResult {
-  years: number;
-  months: number;
-  days: number;
-  totalDays: number;
-  totalWeeks: number;
-  nextBirthdayDays: number;
-  valid: boolean;
-}
-
-function computeAge(birthStr: string, refStr: string): AgeResult {
-  const birth = new Date(birthStr + "T00:00:00Z");
-  const ref = new Date(refStr + "T00:00:00Z");
-  const invalid = !birthStr || !refStr || isNaN(birth.getTime()) || isNaN(ref.getTime()) || birth > ref;
-  if (invalid) return { years: 0, months: 0, days: 0, totalDays: 0, totalWeeks: 0, nextBirthdayDays: 0, valid: false };
-
-  const totalDays = Math.round((ref.getTime() - birth.getTime()) / 86400000);
-  const totalWeeks = Math.floor(totalDays / 7);
-
-  let years = ref.getUTCFullYear() - birth.getUTCFullYear();
-  let months = ref.getUTCMonth() - birth.getUTCMonth();
-  let days = ref.getUTCDate() - birth.getUTCDate();
-  if (days < 0) {
-    months--;
-    const prevMonth = new Date(Date.UTC(ref.getUTCFullYear(), ref.getUTCMonth(), 0));
-    days += prevMonth.getUTCDate();
-  }
-  if (months < 0) {
-    years--;
-    months += 12;
-  }
-
-  let nextBirthday = new Date(Date.UTC(ref.getUTCFullYear(), birth.getUTCMonth(), birth.getUTCDate()));
-  if (nextBirthday <= ref) nextBirthday = new Date(Date.UTC(ref.getUTCFullYear() + 1, birth.getUTCMonth(), birth.getUTCDate()));
-  const nextBirthdayDays = Math.round((nextBirthday.getTime() - ref.getTime()) / 86400000);
-
-  return { years, months, days, totalDays, totalWeeks, nextBirthdayDays, valid: true };
-}
 
 export default function AgeCalculatorPage() {
   const { dict } = useI18n();
