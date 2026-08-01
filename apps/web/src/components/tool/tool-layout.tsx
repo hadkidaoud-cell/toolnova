@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   ChevronRight,
   Home,
-  Share2,
   Heart,
   Flag,
   MessageCircle,

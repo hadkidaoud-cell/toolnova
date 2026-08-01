@@ -178,7 +178,7 @@ export default function ImageCompressorPage() {
     }
     setResults(newResults);
     setProcessing(false);
-  }, [images, compressSingle]);
+  }, [images, compressSingle, results]);
 
   const removeImage = useCallback((id: string) => {
     setImages((prev) => prev.filter((img) => img.id !== id));

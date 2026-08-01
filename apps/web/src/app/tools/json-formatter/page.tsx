@@ -175,7 +175,7 @@ export default function JsonFormatterPage() {
   const validateJson = useCallback(() => {
     setParsed(null);
     try {
-      const p = JSON.parse(input.trim());
+      JSON.parse(input.trim());
       setError(t.jsonFormatter.validJson);
       setTimeout(() => setError(""), 2000);
     } catch {

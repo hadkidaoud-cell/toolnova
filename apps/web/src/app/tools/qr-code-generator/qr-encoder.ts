@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck - Array index access with noUncheckedIndexedAccess
 const EC_LEVELS = { L: 1, M: 0, Q: 3, H: 2 } as const;
 type ECLevel = keyof typeof EC_LEVELS;
@@ -127,7 +128,7 @@ function encodeQR(text: string, ecLevel: ECLevel): boolean[][] {
     data[0] = 0x40 | (bytes.length >> 8);
     data[1] = bytes.length & 0xff;
   }
-  let offset = version <= 9 ? 1 : 2;
+  const offset = version <= 9 ? 1 : 2;
   for (let i = 0; i < Math.min(bytes.length, dataBytes - offset); i++) {
     data[offset + i] = bytes[i];
   }

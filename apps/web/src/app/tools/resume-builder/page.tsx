@@ -43,6 +43,8 @@ interface LanguageEntry { id: string; name: string; proficiency: string; visible
 interface ProjectEntry { id: string; name: string; url: string; description: string; technologies: string[]; startDate: string; endDate: string; highlights: string[]; visible: boolean; }
 interface ResumeData { personal: PersonalInfo; sections: { education: EducationEntry[]; experience: ExperienceEntry[]; skills: SkillEntry[]; languages: LanguageEntry[]; projects: ProjectEntry[]; }; template: string; sectionVisibility: Record<string, boolean>; }
 
+type ResumeSectionEntry = ResumeData["sections"][keyof ResumeData["sections"]][number];
+
 const TEMPLATES = [
   { id: "modern", primaryColor: "#0d6efd", font: "Inter, sans-serif" },
   { id: "classic", primaryColor: "#1a1a2e", font: "Georgia, serif" },
@@ -252,22 +254,23 @@ export default function ResumeBuilderPage() {
   const updatePersonal = (field: keyof PersonalInfo, value: string) => setData((d) => ({ ...d, personal: { ...d.personal, [field]: value } }));
 
   const addEntry = (sectionKey: keyof ResumeData["sections"]) => setData((d) => {
-    const entryMap: Record<string, any> = {
+    const entryMap: Record<keyof ResumeData["sections"], ResumeSectionEntry> = {
       education: { id: uid(), institution: "", degree: "", field: "", startDate: "", endDate: "", gpa: "", description: "", visible: true },
       experience: { id: uid(), company: "", position: "", location: "", startDate: "", endDate: "", current: false, description: "", highlights: [], visible: true },
       skills: { id: uid(), name: "", level: "intermediate", category: "Other", visible: true },
       languages: { id: uid(), name: "", proficiency: "professional", visible: true },
       projects: { id: uid(), name: "", url: "", description: "", technologies: [], startDate: "", endDate: "", highlights: [], visible: true },
     };
-    return { ...d, sections: { ...d.sections, [sectionKey]: [...d.sections[sectionKey], entryMap[sectionKey]] } };
+    const next = [...d.sections[sectionKey], entryMap[sectionKey]] as (typeof d.sections)[typeof sectionKey];
+    return { ...d, sections: { ...d.sections, [sectionKey]: next } };
   });
 
-  const updateEntry = (sectionKey: keyof ResumeData["sections"], id: string, field: string, value: any) => setData((d) => ({
-    ...d, sections: { ...d.sections, [sectionKey]: d.sections[sectionKey].map((e: any) => e.id === id ? { ...e, [field]: value } : e) },
+  const updateEntry = (sectionKey: keyof ResumeData["sections"], id: string, field: string, value: unknown) => setData((d) => ({
+    ...d, sections: { ...d.sections, [sectionKey]: d.sections[sectionKey].map((e) => e.id === id ? { ...e, [field]: value } : e) as (typeof d.sections)[typeof sectionKey] },
   }));
 
   const removeEntry = (sectionKey: keyof ResumeData["sections"], id: string) => setData((d) => ({
-    ...d, sections: { ...d.sections, [sectionKey]: d.sections[sectionKey].filter((e: any) => e.id !== id) },
+    ...d, sections: { ...d.sections, [sectionKey]: d.sections[sectionKey].filter((e) => e.id !== id) },
   }));
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -470,7 +473,7 @@ export default function ResumeBuilderPage() {
                       {personalFields.map((f) => (
                         <div key={f.key} className={fieldCls}>
                           <label className={labelCls}>{f.label}</label>
-                          <input className={inputCls} value={(data.personal as any)[f.key] || ""} onChange={(e) => updatePersonal(f.key as keyof PersonalInfo, e.target.value)} />
+                          <input className={inputCls} value={data.personal[f.key as keyof PersonalInfo] || ""} onChange={(e) => updatePersonal(f.key as keyof PersonalInfo, e.target.value)} />
                         </div>
                       ))}
                     </div>
@@ -490,11 +493,12 @@ export default function ResumeBuilderPage() {
                       className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white">+ {t.resume.add}</button>
                   </div>
 
-                  {(data.sections[s as keyof ResumeData["sections"]] as any[]).length === 0 && (
+                  {(data.sections[s as keyof ResumeData["sections"]]).length === 0 && (
                     <p className="text-sm text-neutral-400">{t.resume.noEntriesYet}</p>
                   )}
 
-                  {(data.sections[s as keyof ResumeData["sections"]] as any[]).map((entry: any) => (
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(data.sections[s as keyof ResumeData["sections"]]).map((entry: any) => (
                     <div key={entry.id} className="mb-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-700">
                       <div className="mb-2 flex items-center justify-between">
                         <label className="flex items-center gap-2 text-xs">
@@ -522,6 +526,7 @@ export default function ResumeBuilderPage() {
 
                       {s === "experience" && (
                         <div className="grid grid-cols-2 gap-3">
+                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                           {[{ key: "company", label: t.resume.company }, { key: "position", label: t.resume.position }, { key: "location", label: t.resume.location }, { key: "startDate", label: t.resume.start, type: "month" }, ...(entry.current ? [] : [{ key: "endDate", label: t.resume.end, type: "month" }])].map((f: any) => (
                             <div key={f.key} className={fieldCls}>
                               <label className={labelCls}>{f.label}</label>
@@ -565,6 +570,7 @@ export default function ResumeBuilderPage() {
 
                       {s === "projects" && (
                         <div className="grid grid-cols-2 gap-3">
+                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                           {[{ key: "name", label: t.resume.projectName }, { key: "url", label: t.resume.url }, { key: "startDate", label: t.resume.start, type: "month" }, { key: "endDate", label: t.resume.end, type: "month" }].map((f: any) => (
                             <div key={f.key} className={fieldCls}>
                               <label className={labelCls}>{f.label}</label>

@@ -51,7 +51,8 @@ function rgbToHsl(r: number, g: number, b: number): { h: number; s: number; l: n
   const rr = r / 255, gg = g / 255, bb = b / 255;
   const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb);
   const diff = max - min;
-  let h = 0, s = 0, l = (max + min) / 2;
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
   if (diff !== 0) {
     s = l > 0.5 ? diff / (2 - max - min) : diff / (max + min);
     if (max === rr) h = ((gg - bb) / diff + (gg < bb ? 6 : 0)) * 60;

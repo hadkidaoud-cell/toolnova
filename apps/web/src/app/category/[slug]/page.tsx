@@ -36,10 +36,10 @@ const CATEGORY_META: Record<CategorySlug, { icon: React.ElementType; color: stri
 const CATEGORY_ORDER: Record<CategorySlug, string[]> = {
   text: ["word-counter", "character-counter", "sentence-counter", "reading-time", "text-diff", "case-converter", "text-repeater", "palindrome-checker", "slug-generator", "ascii-art-converter", "password-strength-checker"],
   image: ["image-compressor", "image-resizer", "image-converter", "image-cropper", "color-picker", "image-to-base64", "svg-compressor", "favicon-generator", "color-extractor"],
-  developer: ["json-formatter", "html-formatter", "css-minifier", "javascript-formatter", "base64-encoder", "uuid-generator", "color-converter", "markdown-to-html", "hash-generator", "jwt-decoder", "url-encoder-decoder", "regex-tester"],
+  developer: ["json-formatter", "html-formatter", "css-minifier", "javascript-formatter", "base64-encoder", "uuid-generator", "color-converter", "markdown-to-html", "hash-generator", "jwt-decoder", "url-encoder-decoder", "regex-tester", "qr-code-generator"],
   calculation: ["basic-calculator", "percentage-calculator", "bmi-calculator", "tip-calculator", "loan-calculator", "age-calculator", "date-difference", "countdown-timer"],
   converter: ["unit-converter", "currency-converter", "temperature-converter", "file-converter", "timezone-converter", "number-base-converter"],
-  generator: ["qr-code-generator", "password-generator", "resume-builder", "random-number", "lorem-ipsum-generator"],
+  generator: ["password-generator", "random-number", "lorem-ipsum-generator"],
   document: ["pdf-merger", "pdf-compressor", "image-to-pdf", "pdf-splitter", "resume-builder"],
 };
 
@@ -108,19 +108,19 @@ export default function CategoryPage() {
   const cat = dict.category;
   const [search, setSearch] = React.useState("");
 
-  const isKnown = slug in CATEGORY_ORDER;
   const categorySlug = slug as CategorySlug;
-  const category = isKnown
-    ? {
-        name: cat.categories[categorySlug].name,
-        description: cat.categories[categorySlug].description,
-        tools: CATEGORY_ORDER[categorySlug].map((toolSlug) => ({
-          id: toolSlug,
-          name: cat.tools[toolSlug]?.name ?? toolSlug,
-          description: cat.tools[toolSlug]?.description ?? "",
-        })),
-      }
-    : null;
+  const category = React.useMemo(() => {
+    if (!(slug in CATEGORY_ORDER)) return null;
+    return {
+      name: cat.categories[categorySlug].name,
+      description: cat.categories[categorySlug].description,
+      tools: CATEGORY_ORDER[categorySlug].map((toolSlug) => ({
+        id: toolSlug,
+        name: cat.tools[toolSlug]?.name ?? toolSlug,
+        description: cat.tools[toolSlug]?.description ?? "",
+      })),
+    };
+  }, [slug, cat, categorySlug]);
 
   const filteredTools = React.useMemo(() => {
     const all = category?.tools ?? [];

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { ToolLayout } from "@/components/tool/tool-layout";
 import { useI18n } from "@/i18n";
 import { HeartPulse } from "lucide-react";

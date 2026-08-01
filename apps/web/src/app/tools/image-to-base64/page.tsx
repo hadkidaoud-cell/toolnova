@@ -95,7 +95,7 @@ export default function ImageToBase64Page() {
       reader.onerror = () => setError(u.noFile);
       reader.readAsDataURL(file);
     },
-    [t.common, u]
+    [u]
   );
 
   const copy = async (kind: "dataUrl" | "raw") => {

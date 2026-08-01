@@ -88,6 +88,10 @@ function generatePassword(length: number, opts: { upper: boolean; lower: boolean
   return pwd;
 }
 
+function generateMany(len: number, cnt: number, o: { upper: boolean; lower: boolean; num: boolean; sym: boolean; excludeAmbiguous: boolean; excludeSimilar: boolean }): string[] {
+  return Array.from({ length: cnt }, () => generatePassword(len, o));
+}
+
 export default function PasswordGeneratorPage() {
   const { dict } = useI18n();
   const t = dict.tools;
@@ -126,10 +130,6 @@ export default function PasswordGeneratorPage() {
     setPasswords(generateMany(length, count, opts));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  function generateMany(len: number, cnt: number, o: typeof opts): string[] {
-    return Array.from({ length: cnt }, () => generatePassword(len, o));
-  }
 
   const regenerate = useCallback(() => {
     const newPasswords = generateMany(length, count, opts);

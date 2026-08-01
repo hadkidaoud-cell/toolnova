@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import prisma from "@toolnova/database";
 
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
     const event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET ?? "");
 
     if (event.type === "checkout.session.completed") {
-      const session = event.data.object as any;
+      const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.userId;
       const planId = session.metadata?.planId;
 

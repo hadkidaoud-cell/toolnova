@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ToolLayout } from "@/components/tool/tool-layout";
 import { useI18n } from "@/i18n";
 import { Timer } from "lucide-react";
@@ -84,12 +84,7 @@ export default function CountdownTimerPage() {
     icon: RELATED_ICONS[slug] ?? "+",
   }));
 
-  const now = useMemo(() => {
-    const d = new Date();
-    d.setSeconds(0, 0);
-    const offset = d.getTimezoneOffset();
-    return new Date(d.getTime() - offset * 60000).toISOString().slice(0, 16);
-  }, []);
+  
   const [eventName, setEventName] = useState("");
   const [target, setTarget] = useState("");
   const [running, setRunning] = useState(false);

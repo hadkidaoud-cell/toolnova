@@ -182,7 +182,7 @@ async function rasterCompress(
 }
 
 export async function compressPdf(options: CompressOptions): Promise<CompressResult> {
-  const { data, fileName, preset } = options;
+  const { data, preset } = options;
   const originalSize = data.length;
 
   let strategy = "Structural optimization";

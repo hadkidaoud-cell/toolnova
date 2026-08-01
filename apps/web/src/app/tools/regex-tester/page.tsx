@@ -97,7 +97,6 @@ export default function RegexTesterPage() {
       setError(u.invalidRegex);
       return { parts: [], count: 0 };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pattern, flags, text, u.invalidRegex]);
 
   const inputCls =

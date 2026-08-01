@@ -13,9 +13,9 @@ const authConfig = createAuthConfig({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials: any) {
-        const { email, password } = credentials ?? {};
-        if (!email || !password) return null;
+      async authorize(credentials: Partial<Record<string, unknown>>) {
+        const { email, password } = credentials;
+        if (typeof email !== "string" || typeof password !== "string") return null;
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user || !user.password) return null;
         const isValid = await bcrypt.compare(password, user.password);

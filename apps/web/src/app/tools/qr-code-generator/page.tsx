@@ -6,7 +6,7 @@ import { ToolLayout } from "@/components/tool/tool-layout";
 import { UpgradeGate, ProBadge } from "@/components/billing/upgrade-gate";
 import { usePlan } from "@/components/billing/plan-provider";
 import { useI18n } from "@/i18n";
-import { QrCode, Palette, Image, Download, ZoomIn } from "lucide-react";
+import { QrCode, Palette, Image as ImageIcon, Download, ZoomIn } from "lucide-react";
 
 const RELATED_SLUGS = ["password-generator", "uuid-generator", "json-formatter"] as const;
 
@@ -89,7 +89,6 @@ export default function QRCodeGeneratorPage() {
   const [gate, setGate] = useState<null | "svg">(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const logoCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const { plan, limitFor } = usePlan();
   const maxSize = limitFor("qrMaxSize") ?? 800;
@@ -300,7 +299,7 @@ export default function QRCodeGeneratorPage() {
 
             <div>
               <label className="mb-2 flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                <Image className="h-4 w-4" /> {t.qrCode.logoOptional}
+                <ImageIcon className="h-4 w-4" /> {t.qrCode.logoOptional}
               </label>
               <div className="flex items-center gap-3">
                 <button
