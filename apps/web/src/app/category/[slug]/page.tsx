@@ -34,12 +34,12 @@ const CATEGORY_META: Record<CategorySlug, { icon: React.ElementType; color: stri
 };
 
 const CATEGORY_ORDER: Record<CategorySlug, string[]> = {
-  text: ["word-counter", "character-counter", "sentence-counter", "reading-time", "text-diff", "case-converter", "text-repeater", "palindrome-checker"],
-  image: ["image-compressor", "image-resizer", "image-converter", "image-cropper", "color-picker"],
-  developer: ["json-formatter", "html-formatter", "css-minifier", "javascript-formatter", "base64-encoder", "uuid-generator", "color-converter"],
-  calculation: ["basic-calculator", "percentage-calculator", "bmi-calculator", "tip-calculator", "loan-calculator"],
-  converter: ["unit-converter", "currency-converter", "temperature-converter", "file-converter"],
-  generator: ["qr-code-generator", "password-generator", "resume-builder", "random-number"],
+  text: ["word-counter", "character-counter", "sentence-counter", "reading-time", "text-diff", "case-converter", "text-repeater", "palindrome-checker", "slug-generator", "ascii-art-converter", "password-strength-checker"],
+  image: ["image-compressor", "image-resizer", "image-converter", "image-cropper", "color-picker", "image-to-base64", "svg-compressor", "favicon-generator", "color-extractor"],
+  developer: ["json-formatter", "html-formatter", "css-minifier", "javascript-formatter", "base64-encoder", "uuid-generator", "color-converter", "markdown-to-html", "hash-generator", "jwt-decoder", "url-encoder-decoder", "regex-tester"],
+  calculation: ["basic-calculator", "percentage-calculator", "bmi-calculator", "tip-calculator", "loan-calculator", "age-calculator", "date-difference", "countdown-timer"],
+  converter: ["unit-converter", "currency-converter", "temperature-converter", "file-converter", "timezone-converter", "number-base-converter"],
+  generator: ["qr-code-generator", "password-generator", "resume-builder", "random-number", "lorem-ipsum-generator"],
   document: ["pdf-merger", "pdf-compressor", "image-to-pdf", "pdf-splitter", "resume-builder"],
 };
 
@@ -81,6 +81,24 @@ const TOOL_ICONS: Record<string, string> = {
   "pdf-compressor": "C",
   "image-to-pdf": "I",
   "pdf-splitter": "S",
+  "image-to-base64": "64",
+  "svg-compressor": "SVG",
+  "favicon-generator": "F",
+  "color-extractor": "◍",
+  "age-calculator": "🎂",
+  "date-difference": "↔",
+  "timezone-converter": "🕐",
+  "countdown-timer": "⏳",
+  "lorem-ipsum-generator": "¶",
+  "slug-generator": "S",
+  "ascii-art-converter": "A",
+  "password-strength-checker": "🔒",
+  "markdown-to-html": "MD",
+  "hash-generator": "#",
+  "jwt-decoder": "JWT",
+  "url-encoder-decoder": "URL",
+  "regex-tester": ".*",
+  "number-base-converter": "0x",
 };
 
 export default function CategoryPage() {
