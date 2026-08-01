@@ -172,6 +172,24 @@ export interface Dictionary {
       "image-resizer": { name: string; description: string; short: string };
       "image-converter": { name: string; description: string; short: string };
       "image-cropper": { name: string; description: string; short: string };
+      "age-calculator": { name: string; description: string; short: string };
+      "ascii-art-converter": { name: string; description: string; short: string };
+      "color-extractor": { name: string; description: string; short: string };
+      "countdown-timer": { name: string; description: string; short: string };
+      "date-difference": { name: string; description: string; short: string };
+      "favicon-generator": { name: string; description: string; short: string };
+      "hash-generator": { name: string; description: string; short: string };
+      "image-to-base64": { name: string; description: string; short: string };
+      "jwt-decoder": { name: string; description: string; short: string };
+      "lorem-ipsum-generator": { name: string; description: string; short: string };
+      "markdown-to-html": { name: string; description: string; short: string };
+      "number-base-converter": { name: string; description: string; short: string };
+      "password-strength-checker": { name: string; description: string; short: string };
+      "regex-tester": { name: string; description: string; short: string };
+      "slug-generator": { name: string; description: string; short: string };
+      "svg-compressor": { name: string; description: string; short: string };
+      "timezone-converter": { name: string; description: string; short: string };
+      "url-encoder-decoder": { name: string; description: string; short: string };
     };
     common: {
       dropPdf: string;
@@ -764,6 +782,195 @@ export interface Dictionary {
       resumeExported: string;
       untitled: string;
       freeDraftLimit: string;
+    };
+    ageCalculator: {
+      birthdate: string;
+      today: string;
+      years: string;
+      months: string;
+      days: string;
+      totalDays: string;
+      weeksLived: string;
+      nextBirthday: string;
+      invalidDate: string;
+    };
+    dateDifference: {
+      from: string;
+      to: string;
+      years: string;
+      months: string;
+      days: string;
+      totalDays: string;
+      totalWeeks: string;
+      swap: string;
+      invalidRange: string;
+    };
+    timezoneConverter: {
+      dateTime: string;
+      from: string;
+      to: string;
+      convert: string;
+      result: string;
+      sameInstant: string;
+      invalidDateTime: string;
+    };
+    countdown: {
+      eventName: string;
+      eventDate: string;
+      days: string;
+      hours: string;
+      minutes: string;
+      seconds: string;
+      totalRemaining: string;
+      live: string;
+      start: string;
+      reset: string;
+      invalidDate: string;
+    };
+    loremIpsum: {
+      paragraphs: string;
+      sentences: string;
+      words: string;
+      generate: string;
+      includeStart: string;
+      copyAll: string;
+      placeholder: string;
+    };
+    slugGenerator: {
+      input: string;
+      lowercase: string;
+      separator: string;
+      generate: string;
+      copy: string;
+      placeholder: string;
+    };
+    asciiArt: {
+      input: string;
+      font: string;
+      generate: string;
+      copy: string;
+      widthLabel: string;
+      placeholder: string;
+    };
+    passwordStrength: {
+      password: string;
+      strength: string;
+      score: string;
+      veryWeak: string;
+      weak: string;
+      fair: string;
+      strong: string;
+      veryStrong: string;
+      criteria: string;
+      length: string;
+      uppercase: string;
+      lowercase: string;
+      number: string;
+      symbol: string;
+      commonPassword: string;
+    };
+    markdownToHtml: {
+      markdown: string;
+      html: string;
+      preview: string;
+      convert: string;
+      copyHtml: string;
+      mdPlaceholder: string;
+      htmlPlaceholder: string;
+      livePreview: string;
+    };
+    hashGenerator: {
+      text: string;
+      algorithm: string;
+      generate: string;
+      hashPlaceholder: string;
+      invalidText: string;
+    };
+    jwtDecoder: {
+      token: string;
+      header: string;
+      payload: string;
+      signature: string;
+      invalidToken: string;
+      decode: string;
+      tokenPlaceholder: string;
+      issuedAt: string;
+      expiresAt: string;
+    };
+    urlCodec: {
+      mode: string;
+      encode: string;
+      decode: string;
+      input: string;
+      output: string;
+      convert: string;
+      urlPlaceholder: string;
+      invalidInput: string;
+    };
+    regexTester: {
+      pattern: string;
+      flags: string;
+      testText: string;
+      matches: string;
+      matchCount: string;
+      noMatches: string;
+      invalidRegex: string;
+      patternPlaceholder: string;
+      testPlaceholder: string;
+    };
+    numberBase: {
+      value: string;
+      fromBase: string;
+      toBase: string;
+      convert: string;
+      result: string;
+      binary: string;
+      octal: string;
+      decimal: string;
+      hexadecimal: string;
+      invalidNumber: string;
+    };
+    imageToBase64: {
+      upload: string;
+      convert: string;
+      dataUrl: string;
+      rawBase64: string;
+      copy: string;
+      download: string;
+      noFile: string;
+      fileTooLarge: string;
+      converted: string;
+    };
+    svgCompressor: {
+      dropSvg: string;
+      compress: string;
+      originalSize: string;
+      compressedSize: string;
+      savedPercent: string;
+      download: string;
+      noFile: string;
+      invalidSvg: string;
+      compressProgress: string;
+    };
+    faviconGenerator: {
+      upload: string;
+      generate: string;
+      preview: string;
+      sizes: string;
+      downloadPng: string;
+      downloadIco: string;
+      noFile: string;
+      transparent: string;
+      note: string;
+    };
+    colorExtractor: {
+      upload: string;
+      extract: string;
+      count: string;
+      copy: string;
+      noFile: string;
+      extracting: string;
+      dominantColors: string;
     };
   };
   category: {
