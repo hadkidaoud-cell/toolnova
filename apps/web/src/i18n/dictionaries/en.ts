@@ -1,4 +1,4 @@
-﻿import type { Dictionary } from "../dictionary";
+﻿﻿import type { Dictionary } from "../dictionary";
 
 const en: Dictionary = {
   header: {
@@ -384,7 +384,7 @@ const en: Dictionary = {
     meta: {
       "pdf-splitter": {
         name: "PDF Splitter",
-        description: "Split a PDF into individual pages or custom ranges â€” right in your browser.",
+        description: "Split a PDF into individual pages or custom ranges — right in your browser.",
         short: "Split PDF into separate pages",
       },
       "pdf-compressor": {
@@ -399,7 +399,7 @@ const en: Dictionary = {
       },
       "image-to-pdf": {
         name: "Image to PDF",
-        description: "Convert JPG, PNG, WebP and more to PDF â€” combine, reorder and download.",
+        description: "Convert JPG, PNG, WebP and more to PDF — combine, reorder and download.",
         short: "Convert images to PDF",
       },
       "qr-code-generator": {
@@ -572,10 +572,10 @@ const en: Dictionary = {
       dropPdf: "Drop a PDF here or click to upload",
       dropPdfs: "Drop PDF files here or click to upload",
       dropImages: "Drop images here or click to upload",
-      pdfOnly: "PDF files only â€” processed 100% in your browser",
-      pdfOnlyMax20: "PDF files only â€” max 20 files",
-      imagesOnly: "PNG Â· JPG Â· WebP Â· GIF Â· BMP â€” processed 100% in your browser",
-      imgFormats50mb: "PNG, JPG, JPEG, WebP â€” up to 50MB each",
+      pdfOnly: "PDF files only — processed 100% in your browser",
+      pdfOnlyMax20: "PDF files only — max 20 files",
+      imagesOnly: "PNG · JPG · WebP · GIF · BMP — processed 100% in your browser",
+      imgFormats50mb: "PNG, JPG, JPEG, WebP — up to 50MB each",
       change: "Change",
       remove: "Remove",
       download: "Download",
@@ -590,7 +590,7 @@ const en: Dictionary = {
       privacyImages:
         "Your images are processed entirely on your device using the open-source pdf-lib library. No uploads, no tracking, no file size limits. Works offline after first load.",
       privacyPdfJs:
-        "Your PDF is processed entirely on your device using open-source libraries (pdf-lib Â· PDF.js). No uploads, no tracking, no file size limits. Works offline after first load.",
+        "Your PDF is processed entirely on your device using open-source libraries (pdf-lib · PDF.js). No uploads, no tracking, no file size limits. Works offline after first load.",
       invalidPdf: "Please select a valid PDF file",
       notPdf: "{name} is not a PDF file",
       failedLoadPdf: "{name}: Failed to load PDF",
@@ -695,7 +695,7 @@ const en: Dictionary = {
       contain: "Contain (fit inside)",
       cover: "Cover (fill page)",
       compressImages: "Compress images",
-      reencodeNote: "Re-encodes images as JPEG â€” smaller PDF, lower file size.",
+      reencodeNote: "Re-encodes images as JPEG — smaller PDF, lower file size.",
       images: "Images",
       output: "Output",
       pages: "Pages",
@@ -708,7 +708,7 @@ const en: Dictionary = {
       downloadPdf: "Download PDF",
       previewTitle: "Image to PDF Preview",
       conversionFailed: "Conversion failed. Try different settings.",
-      someSkipped: "Some files were skipped â€” only PNG, JPG, WebP, GIF and BMP are supported.",
+      someSkipped: "Some files were skipped — only PNG, JPG, WebP, GIF and BMP are supported.",
       fitToImage: "Fit to image",
       a4: "A4",
       letter: "Letter",
@@ -837,8 +837,8 @@ const en: Dictionary = {
       compare: "Compare Texts",
       addedLines: "Added Lines",
       removedLines: "Removed Lines",
-      noDifferences: "No differences found â€” the two texts are identical.",
-      resultPlaceholder: "Click â€œCompare Textsâ€ to see the differences.",
+      noDifferences: "No differences found — the two texts are identical.",
+      resultPlaceholder: "Click “Compare Texts” to see the differences.",
     },
     caseConverter: {
       enterText: "Enter your text below",
@@ -869,8 +869,8 @@ const en: Dictionary = {
       enterText: "Enter your text below",
       pasteHere: "Paste or type your text here...",
       check: "Check Palindrome",
-      isPalindrome: "Yes â€” this text is a palindrome!",
-      notPalindrome: "No â€” this text is not a palindrome.",
+      isPalindrome: "Yes — this text is a palindrome!",
+      notPalindrome: "No — this text is not a palindrome.",
       reversed: "Reversed Text",
       ignoreCasePunct: "Ignore case and punctuation",
       longestSubstring: "Longest Palindrome Substring",
@@ -909,7 +909,7 @@ const en: Dictionary = {
       calculate: "Calculate BMI",
       yourBmi: "Your BMI",
       category: "Category",
-      healthyRange: "Healthy BMI range: 18.5 â€“ 24.9",
+      healthyRange: "Healthy BMI range: 18.5 – 24.9",
       underweight: "Underweight",
       normal: "Normal weight",
       overweight: "Overweight",
