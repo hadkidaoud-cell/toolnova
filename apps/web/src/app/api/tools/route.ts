@@ -59,6 +59,7 @@ const tools = [
   { slug: "webp-converter", name: "WebP Converter", category: "image-tools" },
   { slug: "format-converter", name: "Data Format Converter", category: "converters" },
   { slug: "thumbnail-maker", name: "Thumbnail Maker", category: "image-tools" },
+  { slug: "background-remover", name: "AI Background Remover", category: "image-tools" },
 ];
 
 export async function GET(request: Request) {

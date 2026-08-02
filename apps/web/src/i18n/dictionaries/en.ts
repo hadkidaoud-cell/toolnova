@@ -6,6 +6,13 @@ const en: Dictionary = {
     tagline:
       "Discover hundreds of free online tools. Image editors, text processors, calculators, converters, and more.",
   },
+  ui: {
+    badgeNew: "New",
+    badgeAI: "AI",
+    badgePopular: "Popular",
+    badgeRecommended: "Recommended",
+    viewAll: "View all",
+  },
   header: {
     tools: "Tools",
     categories: "Categories",
@@ -81,6 +88,42 @@ const en: Dictionary = {
       users: "Monthly Users",
       countries: "Countries",
       uptime: "Uptime",
+    },
+    discovery: {
+      mostUsed: {
+        badge: "Most Used",
+        title: "Most Used Tools",
+        subtitle: "The tools our community reaches for every single day",
+      },
+      topRated: {
+        badge: "Top Rated",
+        title: "Top Rated Tools",
+        subtitle: "Loved by thousands — the highest-rated tools in the collection",
+      },
+      trending: {
+        badge: "Trending This Week",
+        title: "Trending This Week",
+        subtitle: "The tools everyone is talking about right now",
+      },
+      newAI: {
+        badge: "AI Tools",
+        title: "New & AI-Powered Tools",
+        subtitle: "Smart tools that run right in your browser",
+      },
+      recentlyAdded: {
+        badge: "Recently Added",
+        title: "Fresh Additions",
+        subtitle: "The newest tools to land in the toolbox",
+      },
+    },
+    aiSpotlight: {
+      badge: "AI Spotlight",
+      title: "Remove Backgrounds Instantly",
+      subtitle:
+        "AI runs entirely on your device — your image never leaves your browser. Free, fast, and private.",
+      cta: "Try it now",
+      privacy: "100% Private",
+      onDevice: "On-device AI",
     },
     featuredBadge: "Featured Tools",
     featuredTitle: "Most Popular Tools",
@@ -263,6 +306,12 @@ const en: Dictionary = {
         description: "Create YouTube, social media, and blog thumbnails in seconds",
         category: "Image",
       },
+      {
+        id: "background-remover",
+        name: "AI Background Remover",
+        description: "Remove image backgrounds automatically with on-device AI",
+        category: "Image",
+      },
     ],
     categories: [
       {
@@ -404,6 +453,14 @@ const en: Dictionary = {
       generator: "Generators",
     },
     units: { min: "min", sec: "sec" },
+    allTools: {
+      title: "All Tools",
+      subtitle:
+        "Every tool in one place — search, browse by category, and start working instantly.",
+      searchPlaceholder: "Search all tools...",
+      allCategories: "All categories",
+      noResults: "No tools found. Try a different search.",
+    },
     meta: {
       "pdf-splitter": {
         name: "PDF Splitter",
@@ -695,6 +752,11 @@ const en: Dictionary = {
         description: "Create YouTube, social media, and blog thumbnails in seconds.",
         short: "Design social thumbnails",
       },
+      "background-remover": {
+        name: "AI Background Remover",
+        description: "Remove image backgrounds in seconds with on-device AI — no uploads.",
+        short: "Remove image backgrounds",
+      },
     },
     common: {
       dropPdf: "Drop a PDF here or click to upload",
@@ -952,6 +1014,37 @@ const en: Dictionary = {
       applyCrop: "Apply Crop",
       download: "Download",
       noImage: "No image selected",
+    },
+    backgroundRemover: {
+      drop: "Drop an image here or click to upload",
+      dragActive: "Drop it to upload",
+      formats: "PNG · JPG · JPEG · WebP — processed 100% in your browser",
+      changeImage: "Change image",
+      model: "AI model",
+      modelFast: "Fast",
+      modelFastDesc: "u2netp · ~4.5 MB · quick results on any device",
+      modelQuality: "High quality",
+      modelQualityDesc: "isnet · ~170 MB · sharpest edges for complex subjects",
+      firstUseNote: "Downloads the model once, then it is cached in your browser.",
+      remove: "Remove Background",
+      removing: "Removing background…",
+      downloadingModel: "Downloading AI model… {pct}%",
+      processing: "Running the AI model on your device…",
+      ready: "Background removed",
+      original: "Original",
+      result: "Result",
+      feather: "Feather edges",
+      halo: "Halo removal",
+      defringe: "Color de-fringe",
+      background: "Background",
+      transparent: "Transparent",
+      solid: "Solid color",
+      download: "Download",
+      downloadPng: "PNG",
+      downloadWebp: "WebP",
+      error: "Could not remove the background. Try a different image or model.",
+      size: "Size",
+      canvasNote: "AI runs entirely on your device — your image never leaves your browser.",
     },
     jsonFormatter: {
       enterJson: "Enter JSON",
@@ -1643,6 +1736,7 @@ const en: Dictionary = {
       "webp-converter": { name: "WebP Converter", description: "Convert images to WebP" },
       "format-converter": { name: "Data Format Converter", description: "Convert between data formats" },
       "thumbnail-maker": { name: "Thumbnail Maker", description: "Create social thumbnails" },
+      "background-remover": { name: "AI Background Remover", description: "Remove image backgrounds" },
     },
   },
   login: {

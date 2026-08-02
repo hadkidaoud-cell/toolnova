@@ -13,8 +13,8 @@ const authConfig = createAuthConfig({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials: any) {
-        const { email, password } = credentials ?? {};
+      async authorize(credentials: unknown) {
+        const { email, password } = (credentials ?? {}) as Record<string, string | undefined>;
         if (!email || !password) return null;
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user || !user.password) return null;

@@ -13,6 +13,9 @@
         "build/**"
       ]
     },
+    "@toolnova/database#build": {
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true
@@ -30,6 +33,10 @@
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
     },
+    "@toolnova/api#test": { "outputs": [] },
+    "@toolnova/core#test": { "outputs": [] },
+    "@toolnova/ui#test": { "outputs": [] },
+    "@toolnova/web#test": { "outputs": [] },
     "test:watch": {
       "cache": false,
       "persistent": true

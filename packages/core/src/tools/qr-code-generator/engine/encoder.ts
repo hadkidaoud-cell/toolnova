@@ -366,7 +366,7 @@ export function encode(text: string, ecLevel: ECLevel): QRMatrix {
   dataBits.push(getModeIndicator(mode), 0, 0, 0);
 
   const charCountLen = getCharCountIndicatorLength(1, mode);
-  let tempBits: number[] = [];
+  const tempBits: number[] = [];
 
   if (mode === "numeric") {
     for (let b = charCountLen - 1; b >= 0; b--) tempBits.push((text.length >> b) & 1);
@@ -411,7 +411,7 @@ export function encode(text: string, ecLevel: ECLevel): QRMatrix {
   addTerminator(dataBits, version, ecLevel);
   padToByteBoundary(dataBits);
 
-  let dataBytes = bitsToBytes(dataBits);
+  const dataBytes = bitsToBytes(dataBits);
   const totalDataBytes = getDataCapacity(version, ecLevel);
   addPadding(dataBytes, totalDataBytes);
 

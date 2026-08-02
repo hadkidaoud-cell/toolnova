@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+import * as fs from "fs";
 import type { HashAlgorithm } from "../types/storage.types";
 
 export function computeHash(
@@ -13,11 +14,10 @@ export function computeFileHash(
   algorithm: HashAlgorithm = "sha256"
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const fs = require("fs");
     const hash = crypto.createHash(algorithm);
     const stream = fs.createReadStream(filePath);
 
-    stream.on("data", (data: Buffer) => hash.update(data));
+    stream.on("data", (chunk: string | Buffer) => hash.update(chunk));
     stream.on("end", () => resolve(hash.digest("hex")));
     stream.on("error", (err: Error) => reject(err));
   });

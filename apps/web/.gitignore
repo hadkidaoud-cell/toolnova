@@ -4,3 +4,5 @@ node_modules/
 out/
 build/
 .env*.local
+public/models/
+public/ort/

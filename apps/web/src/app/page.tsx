@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Search,
   ArrowRight,
@@ -11,14 +12,11 @@ import {
   Code,
   Image,
   FileText,
-  FileArchive,
-  FileImage,
-  Scissors,
   Calculator,
   RefreshCw,
   Sparkles,
   ChevronDown,
-  BarChart3,
+  ChartColumn,
   Users,
   Activity,
   Mail,
@@ -27,34 +25,34 @@ import { motion, useInView, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DiscoverySection } from "@/components/home/discovery-section";
+import { AISpotlight } from "@/components/home/ai-spotlight";
 import { useI18n } from "@/i18n";
+import {
+  CATEGORY_META,
+  CATEGORY_ORDER,
+  DISCOVERY,
+  type ToolCategory,
+} from "@/lib/tool-catalog";
 
-const FEATURED_TOOL_META: Record<string, { icon: React.ElementType; gradient: string }> = {
-  "qr-code-generator": { icon: Zap, gradient: "from-purple-500 to-pink-500" },
-  "image-compressor": { icon: Image, gradient: "from-green-500 to-emerald-500" },
-  "pdf-merger": { icon: FileText, gradient: "from-red-500 to-orange-500" },
-  "pdf-compressor": { icon: FileArchive, gradient: "from-rose-500 to-red-500" },
-  "image-to-pdf": { icon: FileImage, gradient: "from-orange-500 to-amber-500" },
-  "pdf-splitter": { icon: Scissors, gradient: "from-red-500 to-rose-500" },
-  "resume-builder": { icon: FileText, gradient: "from-blue-500 to-cyan-500" },
-  "word-counter": { icon: Code, gradient: "from-amber-500 to-yellow-500" },
-  "json-formatter": { icon: Code, gradient: "from-indigo-500 to-violet-500" },
-  "webp-converter": { icon: Image, gradient: "from-cyan-500 to-teal-500" },
-  "format-converter": { icon: RefreshCw, gradient: "from-fuchsia-500 to-purple-500" },
-  "thumbnail-maker": { icon: Image, gradient: "from-sky-500 to-blue-500" },
-};
-
-const CATEGORY_META: Record<string, { icon: React.ElementType; color: string; count: number }> = {
-  text: { icon: FileText, color: "from-blue-500 to-cyan-500", count: 11 },
-  image: { icon: Image, color: "from-green-500 to-emerald-500", count: 11 },
-  developer: { icon: Code, color: "from-indigo-500 to-violet-500", count: 13 },
-  calculation: { icon: Calculator, color: "from-amber-500 to-yellow-500", count: 8 },
-  converter: { icon: RefreshCw, color: "from-purple-500 to-pink-500", count: 7 },
-  generator: { icon: Sparkles, color: "from-red-500 to-orange-500", count: 3 },
-};
+const DISCOVERY_SECTIONS = (() => {
+  const seen = new Set<string>();
+  const pick = (list: string[]) => {
+    const out = list.filter((slug) => !seen.has(slug));
+    out.forEach((slug) => seen.add(slug));
+    return out;
+  };
+  return {
+    mostUsed: pick(DISCOVERY.mostUsed),
+    trending: pick(DISCOVERY.trending),
+    newAI: pick(DISCOVERY.newAI),
+    recentlyAdded: pick(DISCOVERY.recentlyAdded),
+    topRated: pick(DISCOVERY.topRated),
+  };
+})();
 
 const STAT_META = [
-  { value: 500, suffix: "+", key: "tools" as const, icon: BarChart3 },
+  { value: 500, suffix: "+", key: "tools" as const, icon: ChartColumn },
   { value: 50, suffix: "K+", key: "users" as const, icon: Users },
   { value: 180, suffix: "+", key: "countries" as const, icon: Globe },
   { value: 99.9, suffix: "%", key: "uptime" as const, icon: Activity },
@@ -119,6 +117,17 @@ function FloatingIcon({ icon: Icon, className }: { icon: React.ElementType; clas
 
 function HeroSection() {
   const { dict } = useI18n();
+  const router = useRouter();
+  const [query, setQuery] = React.useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (q) {
+      router.push(`/tools?q=${encodeURIComponent(q)}`);
+    }
+  };
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-brand-50/50 via-white to-white pb-20 pt-24 dark:from-brand-950/10 dark:via-neutral-950 dark:to-neutral-950">
       <div className="bg-grid absolute inset-0 opacity-40" />
@@ -146,7 +155,7 @@ function HeroSection() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2 }}
-            className="mb-8 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-sm font-medium text-brand-700 dark:border-brand-800/50 dark:bg-brand-900/20 dark:text-brand-300"
+            className="mb-8 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/70 px-4 py-1.5 text-sm font-medium text-brand-700 shadow-sm backdrop-blur dark:border-brand-800/50 dark:bg-brand-900/20 dark:text-brand-300"
           >
             <Sparkles className="h-3.5 w-3.5" />
             <span>{dict.home.badge}</span>
@@ -170,25 +179,28 @@ function HeroSection() {
             transition={{ delay: 0.4 }}
             className="mt-10"
           >
-            <div className="mx-auto max-w-xl">
+            <form onSubmit={handleSubmit} className="mx-auto max-w-xl">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-neutral-400 rtl:left-auto rtl:right-4" />
                 <input
                   type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
                   placeholder={dict.home.searchPlaceholder}
                   className="h-14 w-full rounded-2xl border border-neutral-200 bg-white pl-12 pr-4 text-base text-neutral-900 shadow-lg shadow-neutral-200/50 placeholder:text-neutral-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white dark:shadow-neutral-900/50 dark:placeholder:text-neutral-500 rtl:pl-4 rtl:pr-12"
                 />
               </div>
-            </div>
+            </form>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm">
               <span className="text-neutral-500 dark:text-neutral-400">{dict.home.popular}</span>
               {dict.home.featuredTools.slice(0, 4).map((term) => (
-                <button
+                <Link
                   key={term.id}
+                  href={`/tools/${term.id}`}
                   className="rounded-full border border-neutral-200 bg-neutral-100/50 px-3 py-1 text-xs font-medium text-neutral-600 transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:border-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-400 dark:hover:border-brand-600 dark:hover:bg-brand-900/20 dark:hover:text-brand-300"
                 >
                   {term.name}
-                </button>
+                </Link>
               ))}
             </div>
           </motion.div>
@@ -245,78 +257,18 @@ function StatsSection() {
   );
 }
 
-function FeaturedToolsSection() {
-  const { dict } = useI18n();
-  return (
-    <section id="tools" className="bg-neutral-50/50 py-20 dark:bg-neutral-900/20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center"
-        >
-          <Badge variant="secondary" className="mb-4">{dict.home.featuredBadge}</Badge>
-          <h2 className="text-3xl font-bold text-neutral-900 dark:text-white sm:text-4xl">
-            {dict.home.featuredTitle}
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-neutral-600 dark:text-neutral-400">
-            {dict.home.featuredSubtitle}
-          </p>
-        </motion.div>
-
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {dict.home.featuredTools.map((tool, i) => {
-            const meta = FEATURED_TOOL_META[tool.id];
-            const Icon = meta?.icon ?? FileText;
-            return (
-              <motion.div
-                key={tool.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -4 }}
-              >
-                <Link
-                  href={`/tools/${tool.id}`}
-                  className="group relative block rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm transition-all hover:border-brand-200 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-brand-700"
-                >
-                  <div className="mb-4 flex items-center gap-3">
-                    <div
-                      className={cn(
-                        "flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm",
-                        meta?.gradient ?? "from-brand-500 to-brand-600"
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <Badge variant="secondary" className="text-xs">{tool.category}</Badge>
-                  </div>
-                  <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-400">
-                    {tool.name}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-                    {tool.description}
-                  </p>
-                  <div className="mt-4 flex items-center gap-1 text-sm font-medium text-brand-600 dark:text-brand-400">
-                    {dict.toolLayout.useTool}
-                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function CategoriesSection() {
   const { dict } = useI18n();
+  const categories = (Object.keys(CATEGORY_META) as ToolCategory[]).map((slug) => ({
+    slug,
+    name: dict.category.categories[slug].name,
+    description: dict.category.categories[slug].description,
+    count: CATEGORY_ORDER[slug].length,
+    meta: CATEGORY_META[slug],
+  }));
+
   return (
-    <section className="py-20">
+    <section className="bg-neutral-50/50 py-20 dark:bg-neutral-900/20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -334,43 +286,43 @@ function CategoriesSection() {
         </motion.div>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {dict.home.categories.map((cat, i) => {
-            const meta = CATEGORY_META[cat.id];
-            const Icon = meta?.icon ?? FileText;
-            return (
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -2 }}
+          {categories.map((cat, i) => (
+            <motion.div
+              key={cat.slug}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              whileHover={{ y: -2 }}
+            >
+              <Link
+                href={`/category/${cat.slug}`}
+                className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm transition-all hover:border-brand-200 hover:shadow-lg dark:border-neutral-800 dark:bg-neutral-900/70 dark:hover:border-brand-700/50"
               >
-                <Link
-                  href={`/category/${cat.id}`}
-                  className="group flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:border-brand-200 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-brand-700"
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b opacity-0 transition-opacity duration-300 group-hover:opacity-10 dark:group-hover:opacity-15" />
+                <div
+                  className={cn(
+                    "flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md ring-1 ring-inset ring-white/25",
+                    cat.meta.gradient
+                  )}
                 >
-                  <div
-                    className={cn(
-                      "flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm",
-                      meta?.color ?? "from-brand-500 to-brand-600"
-                    )}
-                  >
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-neutral-900 group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-400">
-                      {cat.name}
-                    </h3>
-                    <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">
-                      {meta?.count ?? 0} {dict.home.toolsSuffix}
-                    </p>
-                  </div>
-                  <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600 dark:group-hover:text-brand-400 rtl:rotate-180" />
-                </Link>
-              </motion.div>
-            );
-          })}
+                  <cat.meta.icon className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-neutral-900 group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-400">
+                    {cat.name}
+                  </h3>
+                  <p className="mt-0.5 line-clamp-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    {cat.description}
+                  </p>
+                  <p className={cn("mt-1 text-xs font-medium", cat.meta.soft)}>
+                    {cat.count} {dict.home.toolsSuffix}
+                  </p>
+                </div>
+                <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600 dark:group-hover:text-brand-400 rtl:rotate-180" />
+              </Link>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
@@ -496,7 +448,7 @@ function PricingPreview() {
               </ul>
               <Link href="/pricing">
                 <Button
-                  className={cn("mt-8 w-full", plan.popular ? "" : "variant-outline")}
+                  className={cn("mt-8 w-full", plan.popular && "shadow-lg shadow-brand-600/25")}
                   variant={plan.popular ? "default" : "outline"}
                 >
                   {plan.cta}
@@ -666,11 +618,49 @@ function NewsletterSection() {
 }
 
 export default function HomePage() {
+  const { dict } = useI18n();
+
   return (
     <>
       <HeroSection />
       <StatsSection />
-      <FeaturedToolsSection />
+      <div id="tools">
+        <DiscoverySection
+          badge={dict.home.discovery.mostUsed.badge}
+          title={dict.home.discovery.mostUsed.title}
+          subtitle={dict.home.discovery.mostUsed.subtitle}
+          slugs={DISCOVERY_SECTIONS.mostUsed}
+        />
+        <DiscoverySection
+          badge={dict.home.discovery.trending.badge}
+          title={dict.home.discovery.trending.title}
+          subtitle={dict.home.discovery.trending.subtitle}
+          slugs={DISCOVERY_SECTIONS.trending}
+          className="bg-neutral-50/50 dark:bg-neutral-900/20"
+        />
+      </div>
+      <AISpotlight />
+      <div>
+        <DiscoverySection
+          badge={dict.home.discovery.newAI.badge}
+          title={dict.home.discovery.newAI.title}
+          subtitle={dict.home.discovery.newAI.subtitle}
+          slugs={DISCOVERY_SECTIONS.newAI}
+        />
+        <DiscoverySection
+          badge={dict.home.discovery.recentlyAdded.badge}
+          title={dict.home.discovery.recentlyAdded.title}
+          subtitle={dict.home.discovery.recentlyAdded.subtitle}
+          slugs={DISCOVERY_SECTIONS.recentlyAdded}
+          className="bg-neutral-50/50 dark:bg-neutral-900/20"
+        />
+        <DiscoverySection
+          badge={dict.home.discovery.topRated.badge}
+          title={dict.home.discovery.topRated.title}
+          subtitle={dict.home.discovery.topRated.subtitle}
+          slugs={DISCOVERY_SECTIONS.topRated}
+        />
+      </div>
       <CategoriesSection />
       <HowItWorksSection />
       <PricingPreview />

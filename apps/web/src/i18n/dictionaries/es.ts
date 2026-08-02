@@ -6,6 +6,13 @@ const es: Dictionary = {
     tagline:
       "Descubre cientos de herramientas gratuitas en línea: editores de imágenes, procesadores de texto, calculadoras, conversores y más.",
   },
+  ui: {
+    badgeNew: "Nuevo",
+    badgeAI: "IA",
+    badgePopular: "Popular",
+    badgeRecommended: "Recomendado",
+    viewAll: "Ver todo",
+  },
   header: {
     tools: "Herramientas",
     categories: "Categorías",
@@ -81,6 +88,42 @@ const es: Dictionary = {
       users: "Usuarios mensuales",
       countries: "Países",
       uptime: "Disponibilidad",
+    },
+    discovery: {
+      mostUsed: {
+        badge: "Más usadas",
+        title: "Herramientas más usadas",
+        subtitle: "Las herramientas que nuestra comunidad usa cada día",
+      },
+      topRated: {
+        badge: "Mejor valoradas",
+        title: "Herramientas mejor valoradas",
+        subtitle: "Amadas por miles — las mejor valoradas de la colección",
+      },
+      trending: {
+        badge: "Tendencias",
+        title: "Tendencias de esta semana",
+        subtitle: "Las herramientas de las que todos hablan ahora mismo",
+      },
+      newAI: {
+        badge: "Herramientas IA",
+        title: "Herramientas IA",
+        subtitle: "Herramientas inteligentes que funcionan en tu navegador",
+      },
+      recentlyAdded: {
+        badge: "Añadidas recientemente",
+        title: "Novedades",
+        subtitle: "Las herramientas más nuevas de la colección",
+      },
+    },
+    aiSpotlight: {
+      badge: "Destacado IA",
+      title: "Elimina fondos al instante",
+      subtitle:
+        "La IA funciona en tu dispositivo — tu imagen nunca sale de tu navegador. Gratis, rápido y privado.",
+      cta: "Probar ahora",
+      privacy: "100% privado",
+      onDevice: "IA en el dispositivo",
     },
     featuredBadge: "Herramientas destacadas",
     featuredTitle: "Herramientas más populares",
@@ -263,6 +306,12 @@ const es: Dictionary = {
         description: "Crea miniaturas para YouTube, redes sociales y blogs en segundos",
         category: "Imagen",
       },
+      {
+        id: "background-remover",
+        name: "Quitafondos IA",
+        description: "Elimina fondos de imágenes automáticamente con IA en tu dispositivo",
+        category: "Imagen",
+      },
     ],
     categories: [
       {
@@ -404,6 +453,14 @@ const es: Dictionary = {
       generator: "Generadores",
     },
     units: { min: "min", sec: "s" },
+    allTools: {
+      title: "Todas las herramientas",
+      subtitle:
+        "Todas las herramientas en un solo lugar — busca, explora por categoría y empieza al instante.",
+      searchPlaceholder: "Buscar herramientas...",
+      allCategories: "Todas las categorías",
+      noResults: "No se encontraron herramientas. Prueba otra búsqueda.",
+    },
     meta: {
       "pdf-splitter": {
         name: "Dividir PDF",
@@ -695,6 +752,11 @@ const es: Dictionary = {
         description: "Crea miniaturas para YouTube, redes sociales y blog en segundos.",
         short: "Diseñar miniaturas sociales",
       },
+      "background-remover": {
+        name: "Quitafondos IA",
+        description: "Elimina el fondo de tus imágenes en segundos con IA en tu dispositivo — sin subidas.",
+        short: "Eliminar fondos de imágenes",
+      },
     },
     common: {
       dropPdf: "Arrastra un PDF aquí o haz clic para subir",
@@ -952,6 +1014,37 @@ const es: Dictionary = {
       applyCrop: "Aplicar recorte",
       download: "Descargar",
       noImage: "Ninguna imagen seleccionada",
+    },
+    backgroundRemover: {
+      drop: "Suelta una imagen aquí o haz clic para subirla",
+      dragActive: "Suéltala para subirla",
+      formats: "PNG · JPG · JPEG · WebP — procesado 100 % en tu navegador",
+      changeImage: "Cambiar imagen",
+      model: "Modelo de IA",
+      modelFast: "Rápido",
+      modelFastDesc: "u2netp · ~4,5 MB · resultados rápidos en cualquier dispositivo",
+      modelQuality: "Alta calidad",
+      modelQualityDesc: "isnet · ~170 MB · bordes más nítidos para sujetos complejos",
+      firstUseNote: "El modelo se descarga una vez y luego se guarda en caché en tu navegador.",
+      remove: "Quitar fondo",
+      removing: "Quitando el fondo…",
+      downloadingModel: "Descargando el modelo de IA… {pct}%",
+      processing: "Ejecutando el modelo de IA en tu dispositivo…",
+      ready: "Fondo eliminado",
+      original: "Original",
+      result: "Resultado",
+      feather: "Suavizar bordes",
+      halo: "Eliminar halo",
+      defringe: "Corrección de color",
+      background: "Fondo",
+      transparent: "Transparente",
+      solid: "Color sólido",
+      download: "Descargar",
+      downloadPng: "PNG",
+      downloadWebp: "WebP",
+      error: "No se pudo quitar el fondo. Prueba con otra imagen u otro modelo.",
+      size: "Tamaño",
+      canvasNote: "La IA funciona por completo en tu dispositivo — tu imagen nunca sale de tu navegador.",
     },
     jsonFormatter: {
       enterJson: "Introduce JSON",
@@ -1643,6 +1736,7 @@ const es: Dictionary = {
       "webp-converter": { name: "Conversor WebP", description: "Convertir imágenes a WebP" },
       "format-converter": { name: "Conversor de formatos de datos", description: "Convertir entre formatos de datos" },
       "thumbnail-maker": { name: "Creador de miniaturas", description: "Diseñar miniaturas sociales" },
+      "background-remover": { name: "Quitafondos IA", description: "Eliminar fondos de imágenes" },
     },
   },
   login: {

@@ -66,6 +66,7 @@ export const metadata: Metadata = {
     "calculators",
     "data format converter",
     "thumbnail maker",
+    "background remover",
   ],
   authors: [{ name: SITE_NAME, url: APP_URL }],
   creator: SITE_NAME,

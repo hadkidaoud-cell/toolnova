@@ -6,6 +6,13 @@ const ar: Dictionary = {
     tagline:
       "اكتشف مئات الأدوات المجانية عبر الإنترنت: محررات الصور، معالجات النصوص، الحاسبات، المحولات والمزيد.",
   },
+  ui: {
+    badgeNew: "جديد",
+    badgeAI: "ذكاء اصطناعي",
+    badgePopular: "شائع",
+    badgeRecommended: "موصى به",
+    viewAll: "عرض الكل",
+  },
   header: {
     tools: "الأدوات",
     categories: "التصنيفات",
@@ -81,6 +88,42 @@ const ar: Dictionary = {
       users: "مستخدم شهرياً",
       countries: "دولة",
       uptime: "وقت التشغيل",
+    },
+    discovery: {
+      mostUsed: {
+        badge: "الأكثر استخداماً",
+        title: "الأدوات الأكثر استخداماً",
+        subtitle: "الأدوات التي يلجأ إليها مجتمعنا كل يوم",
+      },
+      topRated: {
+        badge: "الأعلى تقييماً",
+        title: "الأدوات الأعلى تقييماً",
+        subtitle: "يحبها الآلاف — الأدوات الأفضل تقييماً في مجموعتنا",
+      },
+      trending: {
+        badge: "الرائجة هذا الأسبوع",
+        title: "الرائجة هذا الأسبوع",
+        subtitle: "الأدوات التي يتحدث عنها الجميع الآن",
+      },
+      newAI: {
+        badge: "أدوات الذكاء الاصطناعي",
+        title: "أدوات جديدة بالذكاء الاصطناعي",
+        subtitle: "أدوات ذكية تعمل مباشرة في متصفحك",
+      },
+      recentlyAdded: {
+        badge: "المضافة مؤخراً",
+        title: "إضافات جديدة",
+        subtitle: "أحدث الأدوات التي أضيفت إلى مجموعتنا",
+      },
+    },
+    aiSpotlight: {
+      badge: "أبرز أدوات الذكاء الاصطناعي",
+      title: "أزل الخلفيات في ثوانٍ",
+      subtitle:
+        "يعمل الذكاء الاصطناعي بالكامل على جهازك — صورك لا تغادر متصفحك أبداً. مجاني وسريع وخاص.",
+      cta: "جرّبها الآن",
+      privacy: "خصوصية 100%",
+      onDevice: "ذكاء اصطناعي على الجهاز",
     },
     featuredBadge: "أدوات مميزة",
     featuredTitle: "الأدوات الأكثر استخداماً",
@@ -261,6 +304,12 @@ const ar: Dictionary = {
         description: "أنشئ صوراً مصغرة لليوتيوب والسوشيال والمدونات في ثوانٍ",
         category: "صورة",
       },
+      {
+        id: "background-remover",
+        name: "إزالة الخلفية بالذكاء الاصطناعي",
+        description: "أزل خلفية الصور تلقائياً بالذكاء الاصطناعي على جهازك",
+        category: "صورة",
+      },
     ],
     categories: [
       {
@@ -400,6 +449,13 @@ const ar: Dictionary = {
       generator: "مولدات",
     },
     units: { min: "د", sec: "ث" },
+    allTools: {
+      title: "كل الأدوات",
+      subtitle: "كل أداة في مكان واحد — ابحث، استعرض حسب التصنيف، وابدأ فوراً.",
+      searchPlaceholder: "ابحث في كل الأدوات...",
+      allCategories: "كل التصنيفات",
+      noResults: "لم يتم العثور على أدوات. جرّب بحثاً مختلفاً.",
+    },
     meta: {
       "pdf-splitter": {
         name: "مقسم PDF",
@@ -691,6 +747,11 @@ const ar: Dictionary = {
         description: "أنشئ صورًا مصغرة لليوتيوب ومواقع التواصل والمدونات في ثوانٍ.",
         short: "تصميم صور مصغرة للسوشيال",
       },
+      "background-remover": {
+        name: "إزالة الخلفية بالذكاء الاصطناعي",
+        description: "أزل خلفية الصور في ثوانٍ بالذكاء الاصطناعي على جهازك — دون رفع.",
+        short: "إزالة خلفية الصور",
+      },
     },
     common: {
       dropPdf: "اسحب ملف PDF هنا أو انقر للرفع",
@@ -947,6 +1008,37 @@ const ar: Dictionary = {
       applyCrop: "تطبيق القص",
       download: "تنزيل",
       noImage: "لم تُحدد أي صورة",
+    },
+    backgroundRemover: {
+      drop: "اسحب صورة هنا أو انقر للرفع",
+      dragActive: "اتركها للرفع",
+      formats: "PNG · JPG · JPEG · WebP — تُعالج بالكامل في متصفحك",
+      changeImage: "تغيير الصورة",
+      model: "نموذج الذكاء الاصطناعي",
+      modelFast: "سريع",
+      modelFastDesc: "u2netp · حوالي 4.5 م.ب · نتائج سريعة على أي جهاز",
+      modelQuality: "جودة عالية",
+      modelQualityDesc: "isnet · حوالي 170 م.ب · حواف أدق للمواضيع المعقدة",
+      firstUseNote: "يُحمَّل النموذج مرة واحدة ثم يُخزَّن في متصفحك.",
+      remove: "إزالة الخلفية",
+      removing: "جارٍ إزالة الخلفية…",
+      downloadingModel: "جارٍ تنزيل نموذج الذكاء الاصطناعي… {pct}%",
+      processing: "تشغيل نموذج الذكاء الاصطناعي على جهازك…",
+      ready: "تمت إزالة الخلفية",
+      original: "الأصلية",
+      result: "النتيجة",
+      feather: "تنعيم الحواف",
+      halo: "إزالة الهالة",
+      defringe: "تصحيح الألوان",
+      background: "الخلفية",
+      transparent: "شفاف",
+      solid: "لون ثابت",
+      download: "تنزيل",
+      downloadPng: "PNG",
+      downloadWebp: "WebP",
+      error: "تعذّرت إزالة الخلفية. جرّب صورة أو نموذجًا آخر.",
+      size: "الحجم",
+      canvasNote: "يعمل الذكاء الاصطناعي بالكامل على جهازك — لا تغادر صورتك متصفحك أبدًا.",
     },
     jsonFormatter: {
       enterJson: "أدخل JSON",
@@ -1638,6 +1730,7 @@ const ar: Dictionary = {
       "webp-converter": { name: "محوّل WebP", description: "تحويل الصور إلى WebP" },
       "format-converter": { name: "محوّل صيغ البيانات", description: "التحويل بين صيغ البيانات" },
       "thumbnail-maker": { name: "منشئ الصور المصغرة", description: "تصميم صور مصغرة للسوشيال" },
+      "background-remover": { name: "إزالة الخلفية بالذكاء الاصطناعي", description: "إزالة خلفية الصور" },
     },
   },
   login: {

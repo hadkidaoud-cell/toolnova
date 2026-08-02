@@ -33,7 +33,7 @@ export class ToolNovaError extends Error {
     if (context.stack) {
       this.stack = context.stack;
     } else if ("captureStackTrace" in Error) {
-      (Error as { captureStackTrace: (target: object, constructor: Function) => void }).captureStackTrace(this, ToolNovaError);
+      Error.captureStackTrace?.(this, ToolNovaError);
     }
   }
 

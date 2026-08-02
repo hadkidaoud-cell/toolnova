@@ -17,7 +17,7 @@ export function Header() {
 
   const NAV_LINKS = React.useMemo(
     () => [
-      { href: "/", label: dict.header.tools },
+      { href: "/tools", label: dict.header.tools },
       { href: "/category/text", label: dict.header.categories },
       { href: "/pricing", label: dict.header.pricing },
       { href: "/blog", label: dict.header.blog },

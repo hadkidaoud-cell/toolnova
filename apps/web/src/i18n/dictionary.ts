@@ -3,6 +3,13 @@ export interface Dictionary {
     defaultTitle: string;
     tagline: string;
   };
+  ui: {
+    badgeNew: string;
+    badgeAI: string;
+    badgePopular: string;
+    badgeRecommended: string;
+    viewAll: string;
+  };
   header: {
     tools: string;
     categories: string;
@@ -71,6 +78,14 @@ export interface Dictionary {
     startFree: string;
     viewPricing: string;
     stats: { tools: string; users: string; countries: string; uptime: string };
+    discovery: {
+      mostUsed: { badge: string; title: string; subtitle: string };
+      topRated: { badge: string; title: string; subtitle: string };
+      trending: { badge: string; title: string; subtitle: string };
+      newAI: { badge: string; title: string; subtitle: string };
+      recentlyAdded: { badge: string; title: string; subtitle: string };
+    };
+    aiSpotlight: { badge: string; title: string; subtitle: string; cta: string; privacy: string; onDevice: string };
     featuredBadge: string;
     featuredTitle: string;
     featuredSubtitle: string;
@@ -138,6 +153,13 @@ export interface Dictionary {
       generator: string;
     };
     units: { min: string; sec: string };
+    allTools: {
+      title: string;
+      subtitle: string;
+      searchPlaceholder: string;
+      allCategories: string;
+      noResults: string;
+    };
     meta: {
       "pdf-splitter": { name: string; description: string; short: string };
       "pdf-compressor": { name: string; description: string; short: string };
@@ -197,6 +219,7 @@ export interface Dictionary {
       "webp-converter": { name: string; description: string; short: string };
       "format-converter": { name: string; description: string; short: string };
       "thumbnail-maker": { name: string; description: string; short: string };
+      "background-remover": { name: string; description: string; short: string };
     };
     common: {
       dropPdf: string;
@@ -450,6 +473,37 @@ export interface Dictionary {
       applyCrop: string;
       download: string;
       noImage: string;
+    };
+    backgroundRemover: {
+      drop: string;
+      dragActive: string;
+      formats: string;
+      changeImage: string;
+      model: string;
+      modelFast: string;
+      modelFastDesc: string;
+      modelQuality: string;
+      modelQualityDesc: string;
+      firstUseNote: string;
+      remove: string;
+      removing: string;
+      downloadingModel: string;
+      processing: string;
+      ready: string;
+      original: string;
+      result: string;
+      feather: string;
+      halo: string;
+      defringe: string;
+      background: string;
+      transparent: string;
+      solid: string;
+      download: string;
+      downloadPng: string;
+      downloadWebp: string;
+      error: string;
+      size: string;
+      canvasNote: string;
     };
     jsonFormatter: {
       enterJson: string;

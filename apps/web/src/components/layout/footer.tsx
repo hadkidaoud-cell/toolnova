@@ -22,7 +22,7 @@ export function Footer() {
   const FOOTER_LINKS = React.useMemo(
     () => ({
       [dict.footer.product]: [
-        { label: dict.footer.allTools, href: "/" },
+        { label: dict.footer.allTools, href: "/tools" },
         { label: dict.footer.categories, href: "/category/text" },
         { label: dict.footer.pricing, href: "/pricing" },
         { label: dict.footer.api, href: "#" },

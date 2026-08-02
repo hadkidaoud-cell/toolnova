@@ -144,6 +144,15 @@
     opacity: 0;
   }
 
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .zoom-in-95 {
     transform: scale(0.95);
   }

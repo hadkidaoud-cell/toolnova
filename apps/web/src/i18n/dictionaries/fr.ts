@@ -6,6 +6,13 @@ const fr: Dictionary = {
     tagline:
       "Découvrez des centaines d'outils en ligne gratuits : éditeurs d'images, traitement de texte, calculatrices, convertisseurs et bien plus.",
   },
+  ui: {
+    badgeNew: "Nouveau",
+    badgeAI: "IA",
+    badgePopular: "Populaire",
+    badgeRecommended: "Recommandé",
+    viewAll: "Tout voir",
+  },
   header: {
     tools: "Outils",
     categories: "Catégories",
@@ -81,6 +88,42 @@ const fr: Dictionary = {
       users: "Utilisateurs mensuels",
       countries: "Pays",
       uptime: "Disponibilité",
+    },
+    discovery: {
+      mostUsed: {
+        badge: "Les plus utilisés",
+        title: "Outils les plus utilisés",
+        subtitle: "Les outils que notre communauté utilise au quotidien",
+      },
+      topRated: {
+        badge: "Mieux notés",
+        title: "Outils les mieux notés",
+        subtitle: "Adorés par des milliers d'utilisateurs",
+      },
+      trending: {
+        badge: "Tendances",
+        title: "Tendances de la semaine",
+        subtitle: "Les outils dont tout le monde parle en ce moment",
+      },
+      newAI: {
+        badge: "Outils IA",
+        title: "Outils IA",
+        subtitle: "Des outils intelligents qui fonctionnent dans votre navigateur",
+      },
+      recentlyAdded: {
+        badge: "Ajoutés récemment",
+        title: "Nouveautés",
+        subtitle: "Les derniers outils ajoutés à la boîte à outils",
+      },
+    },
+    aiSpotlight: {
+      badge: "Sous les projecteurs",
+      title: "Supprimez les arrière-plans en un instant",
+      subtitle:
+        "L'IA fonctionne entièrement sur votre appareil — votre image ne quitte jamais votre navigateur. Gratuit, rapide et privé.",
+      cta: "Essayer",
+      privacy: "100% privé",
+      onDevice: "IA sur l'appareil",
     },
     featuredBadge: "Outils en vedette",
     featuredTitle: "Outils les plus populaires",
@@ -263,6 +306,12 @@ const fr: Dictionary = {
         description: "Créez des vignettes YouTube, réseaux sociaux et blog en quelques secondes",
         category: "Image",
       },
+      {
+        id: "background-remover",
+        name: "Suppresseur d'arrière-plan IA",
+        description: "Supprimez automatiquement l'arrière-plan des images avec l'IA locale",
+        category: "Image",
+      },
     ],
     categories: [
       {
@@ -404,6 +453,14 @@ const fr: Dictionary = {
       generator: "Générateurs",
     },
     units: { min: "min", sec: "s" },
+    allTools: {
+      title: "Tous les outils",
+      subtitle:
+        "Tous les outils au même endroit — recherchez, parcourez par catégorie et commencez instantanément.",
+      searchPlaceholder: "Rechercher un outil...",
+      allCategories: "Toutes les catégories",
+      noResults: "Aucun outil trouvé. Essayez une autre recherche.",
+    },
     meta: {
       "pdf-splitter": {
         name: "Diviseur de PDF",
@@ -695,6 +752,11 @@ const fr: Dictionary = {
         description: "Créez des vignettes YouTube, réseaux sociaux et blog en quelques secondes.",
         short: "Créer des vignettes sociales",
       },
+      "background-remover": {
+        name: "Suppresseur d'arrière-plan IA",
+        description: "Supprimez l'arrière-plan de vos images en quelques secondes grâce à l'IA locale — sans envoi.",
+        short: "Supprimer l'arrière-plan des images",
+      },
     },
     common: {
       dropPdf: "Déposez un PDF ici ou cliquez pour télécharger",
@@ -952,6 +1014,37 @@ const fr: Dictionary = {
       applyCrop: "Appliquer le recadrage",
       download: "Télécharger",
       noImage: "Aucune image sélectionnée",
+    },
+    backgroundRemover: {
+      drop: "Déposez une image ici ou cliquez pour téléverser",
+      dragActive: "Relâchez pour téléverser",
+      formats: "PNG · JPG · JPEG · WebP — traité 100 % dans votre navigateur",
+      changeImage: "Changer d'image",
+      model: "Modèle IA",
+      modelFast: "Rapide",
+      modelFastDesc: "u2netp · ~4,5 Mo · résultats rapides sur tout appareil",
+      modelQuality: "Haute qualité",
+      modelQualityDesc: "isnet · ~170 Mo · contours les plus nets pour les sujets complexes",
+      firstUseNote: "Le modèle est téléchargé une fois, puis mis en cache dans votre navigateur.",
+      remove: "Supprimer l'arrière-plan",
+      removing: "Suppression de l'arrière-plan…",
+      downloadingModel: "Téléchargement du modèle IA… {pct}%",
+      processing: "Exécution du modèle IA sur votre appareil…",
+      ready: "Arrière-plan supprimé",
+      original: "Originale",
+      result: "Résultat",
+      feather: "Adoucir les contours",
+      halo: "Suppression du halo",
+      defringe: "Correction des couleurs",
+      background: "Arrière-plan",
+      transparent: "Transparent",
+      solid: "Couleur unie",
+      download: "Télécharger",
+      downloadPng: "PNG",
+      downloadWebp: "WebP",
+      error: "Impossible de supprimer l'arrière-plan. Essayez une autre image ou un autre modèle.",
+      size: "Taille",
+      canvasNote: "L'IA s'exécute entièrement sur votre appareil — votre image ne quitte jamais votre navigateur.",
     },
     jsonFormatter: {
       enterJson: "Saisissez du JSON",
@@ -1643,6 +1736,7 @@ const fr: Dictionary = {
       "webp-converter": { name: "Convertisseur WebP", description: "Convertir des images en WebP" },
       "format-converter": { name: "Convertisseur de formats de données", description: "Convertir entre formats de données" },
       "thumbnail-maker": { name: "Générateur de vignettes", description: "Créer des vignettes sociales" },
+      "background-remover": { name: "Suppresseur d'arrière-plan IA", description: "Supprimer l'arrière-plan des images" },
     },
   },
   login: {

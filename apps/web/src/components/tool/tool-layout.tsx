@@ -11,14 +11,15 @@ import {
   Globe,
   Link2,
   Check,
-  ArrowRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ToolCard } from "@/components/tool/tool-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useI18n } from "@/i18n";
+import { getCategoryMeta, getToolMeta } from "@/lib/tool-catalog";
 
 export interface ToolLayoutProps {
   name: string;
@@ -195,34 +196,14 @@ function RelatedTools({ tools }: { tools: Array<{ slug: string; name: string; de
       <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{dict.toolLayout.relatedTools}</h2>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {tools.map((tool, i) => (
-          <motion.div
+          <ToolCard
             key={tool.slug}
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.05 }}
-            whileHover={{ y: -2 }}
-          >
-            <Link
-              href={`/tools/${tool.slug}`}
-              className="group block rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:border-brand-200 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-brand-700"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500/10 to-brand-600/10 text-sm font-bold text-brand-600 dark:from-brand-400/10 dark:to-brand-500/10 dark:text-brand-400">
-                  {tool.icon || "+"}
-                </div>
-                <h3 className="font-semibold text-neutral-900 group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-400">
-                  {tool.name}
-                </h3>
-              </div>
-              <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-                {tool.description}
-              </p>
-              <div className="mt-3 flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400">
-                {dict.toolLayout.useTool} <ArrowRight className="h-3 w-3" />
-              </div>
-            </Link>
-          </motion.div>
+            slug={tool.slug}
+            name={tool.name}
+            description={tool.description}
+            compact
+            delay={Math.min(i * 0.05, 0.2)}
+          />
         ))}
       </div>
     </section>
@@ -300,18 +281,32 @@ function Sidebar({ relatedTools }: { relatedTools?: Array<{ slug: string; name: 
         <div className="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
           <h3 className="mb-3 text-sm font-semibold text-neutral-900 dark:text-white">{dict.toolLayout.relatedTools}</h3>
           <div className="space-y-2">
-            {relatedTools.slice(0, 5).map((tool) => (
-              <Link
-                key={tool.slug}
-                href={`/tools/${tool.slug}`}
-                className="flex items-center gap-3 rounded-lg p-2 text-sm text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
-              >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-xs font-bold text-brand-600 dark:bg-brand-900/30 dark:text-brand-400">
-                  {tool.icon || "+"}
-                </div>
-                <span className="font-medium">{tool.name}</span>
-              </Link>
-            ))}
+            {relatedTools.slice(0, 5).map((tool) => {
+              const meta = getToolMeta(tool.slug);
+              const cat = meta ? getCategoryMeta(meta.category) : null;
+              const Icon = meta?.icon;
+              return (
+                <Link
+                  key={tool.slug}
+                  href={`/tools/${tool.slug}`}
+                  className="flex items-center gap-3 rounded-lg p-2 text-sm text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100"
+                >
+                  <div
+                    className={cn(
+                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white",
+                      cat ? cn("bg-gradient-to-br", cat.gradient) : "bg-brand-500"
+                    )}
+                  >
+                    {Icon ? (
+                      <Icon className="h-4 w-4" />
+                    ) : (
+                      <span className="text-xs font-bold">{tool.icon || "+"}</span>
+                    )}
+                  </div>
+                  <span className="font-medium">{tool.name}</span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

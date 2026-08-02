@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function NotFound() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">
@@ -6,12 +8,12 @@ export default function NotFound() {
         <h1 className="mt-4 text-3xl font-bold text-neutral-900 dark:text-white">
           Page Not Found
         </h1>
-        <a
+        <Link
           href="/"
           className="mt-8 inline-flex items-center rounded-lg bg-brand-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-brand-700"
         >
           Back to Admin
-        </a>
+        </Link>
       </div>
     </main>
   );

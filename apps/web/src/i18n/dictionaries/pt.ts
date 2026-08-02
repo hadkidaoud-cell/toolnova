@@ -6,6 +6,13 @@ const pt: Dictionary = {
     tagline:
       "Descubra centenas de ferramentas gratuitas online: editores de imagem, processadores de texto, calculadoras, conversores e muito mais.",
   },
+  ui: {
+    badgeNew: "Novo",
+    badgeAI: "IA",
+    badgePopular: "Popular",
+    badgeRecommended: "Recomendado",
+    viewAll: "Ver tudo",
+  },
   header: {
     tools: "Ferramentas",
     categories: "Categorias",
@@ -81,6 +88,42 @@ const pt: Dictionary = {
       users: "Usuários mensais",
       countries: "Países",
       uptime: "Disponibilidade",
+    },
+    discovery: {
+      mostUsed: {
+        badge: "Mais usadas",
+        title: "Ferramentas mais usadas",
+        subtitle: "As ferramentas que nossa comunidade usa todos os dias",
+      },
+      topRated: {
+        badge: "Melhor avaliadas",
+        title: "Ferramentas mais bem avaliadas",
+        subtitle: "Amadas por milhares — as mais bem avaliadas da coleção",
+      },
+      trending: {
+        badge: "Em alta",
+        title: "Em alta esta semana",
+        subtitle: "As ferramentas que estão dando o que falar agora",
+      },
+      newAI: {
+        badge: "Ferramentas IA",
+        title: "Ferramentas de IA",
+        subtitle: "Ferramentas inteligentes que rodam direto no seu navegador",
+      },
+      recentlyAdded: {
+        badge: "Adicionadas recentemente",
+        title: "Novidades",
+        subtitle: "As ferramentas mais recentes da coleção",
+      },
+    },
+    aiSpotlight: {
+      badge: "Destaque IA",
+      title: "Remova fundos instantaneamente",
+      subtitle:
+        "A IA roda inteiramente no seu dispositivo — sua imagem nunca sai do navegador. Grátis, rápido e privado.",
+      cta: "Experimentar",
+      privacy: "100% privado",
+      onDevice: "IA no dispositivo",
     },
     featuredBadge: "Ferramentas em destaque",
     featuredTitle: "Ferramentas mais populares",
@@ -263,6 +306,12 @@ const pt: Dictionary = {
         description: "Crie miniaturas para YouTube, redes sociais e blogs em segundos",
         category: "Imagem",
       },
+      {
+        id: "background-remover",
+        name: "Removedor de fundo IA",
+        description: "Remova fundos de imagens automaticamente com IA no seu dispositivo",
+        category: "Imagem",
+      },
     ],
     categories: [
       {
@@ -404,6 +453,14 @@ const pt: Dictionary = {
       generator: "Geradores",
     },
     units: { min: "min", sec: "s" },
+    allTools: {
+      title: "Todas as ferramentas",
+      subtitle:
+        "Todas as ferramentas em um só lugar — pesquise, navegue por categoria e comece já.",
+      searchPlaceholder: "Pesquisar ferramentas...",
+      allCategories: "Todas as categorias",
+      noResults: "Nenhuma ferramenta encontrada. Tente outra busca.",
+    },
     meta: {
       "pdf-splitter": {
         name: "Dividir PDF",
@@ -695,6 +752,11 @@ const pt: Dictionary = {
         description: "Crie miniaturas para YouTube, redes sociais e blog em segundos.",
         short: "Criar miniaturas sociais",
       },
+      "background-remover": {
+        name: "Removedor de fundo IA",
+        description: "Remova o fundo das suas imagens em segundos com IA no seu dispositivo — sem envios.",
+        short: "Remover fundo de imagens",
+      },
     },
     common: {
       dropPdf: "Arraste um PDF aqui ou clique para enviar",
@@ -952,6 +1014,37 @@ const pt: Dictionary = {
       applyCrop: "Aplicar recorte",
       download: "Baixar",
       noImage: "Nenhuma imagem selecionada",
+    },
+    backgroundRemover: {
+      drop: "Solte uma imagem aqui ou clique para enviar",
+      dragActive: "Solte para enviar",
+      formats: "PNG · JPG · JPEG · WebP — processado 100 % no seu navegador",
+      changeImage: "Trocar imagem",
+      model: "Modelo de IA",
+      modelFast: "Rápido",
+      modelFastDesc: "u2netp · ~4,5 MB · resultados rápidos em qualquer dispositivo",
+      modelQuality: "Alta qualidade",
+      modelQualityDesc: "isnet · ~170 MB · bordas mais nítidas para assuntos complexos",
+      firstUseNote: "O modelo é baixado uma vez e depois fica em cache no seu navegador.",
+      remove: "Remover fundo",
+      removing: "Removendo o fundo…",
+      downloadingModel: "Baixando o modelo de IA… {pct}%",
+      processing: "Executando o modelo de IA no seu dispositivo…",
+      ready: "Fundo removido",
+      original: "Original",
+      result: "Resultado",
+      feather: "Suavizar bordas",
+      halo: "Remover halo",
+      defringe: "Correção de cor",
+      background: "Fundo",
+      transparent: "Transparente",
+      solid: "Cor sólida",
+      download: "Baixar",
+      downloadPng: "PNG",
+      downloadWebp: "WebP",
+      error: "Não foi possível remover o fundo. Tente outra imagem ou outro modelo.",
+      size: "Tamanho",
+      canvasNote: "A IA roda totalmente no seu dispositivo — sua imagem nunca sai do seu navegador.",
     },
     jsonFormatter: {
       enterJson: "Digite JSON",
@@ -1643,6 +1736,7 @@ const pt: Dictionary = {
       "webp-converter": { name: "Conversor WebP", description: "Converter imagens para WebP" },
       "format-converter": { name: "Conversor de formatos de dados", description: "Converter entre formatos de dados" },
       "thumbnail-maker": { name: "Criador de miniaturas", description: "Criar miniaturas sociais" },
+      "background-remover": { name: "Removedor de fundo IA", description: "Remover fundo de imagens" },
     },
   },
   login: {
