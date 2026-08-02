@@ -1,6 +1,11 @@
 import type { Dictionary } from "../dictionary";
 
 const fr: Dictionary = {
+  site: {
+    defaultTitle: "ToolNova - Tous les outils. Au même endroit.",
+    tagline:
+      "Découvrez des centaines d'outils en ligne gratuits : éditeurs d'images, traitement de texte, calculatrices, convertisseurs et bien plus.",
+  },
   header: {
     tools: "Outils",
     categories: "Catégories",

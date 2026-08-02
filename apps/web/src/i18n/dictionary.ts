@@ -1,4 +1,8 @@
 export interface Dictionary {
+  site: {
+    defaultTitle: string;
+    tagline: string;
+  };
   header: {
     tools: string;
     categories: string;

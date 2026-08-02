@@ -1,6 +1,11 @@
 import type { Dictionary } from "../dictionary";
 
 const ar: Dictionary = {
+  site: {
+    defaultTitle: "تول نوفا - كل أداة في مكان واحد",
+    tagline:
+      "اكتشف مئات الأدوات المجانية عبر الإنترنت: محررات الصور، معالجات النصوص، الحاسبات، المحولات والمزيد.",
+  },
   header: {
     tools: "الأدوات",
     categories: "التصنيفات",

@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { LanguageProvider } from "@/i18n";
 import { PlanProvider } from "@/components/billing/plan-provider";
+import { MetaManager } from "@/components/layout/meta-manager";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -55,6 +56,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} font-sans`}>
         <LanguageProvider>
+          <MetaManager />
           <PlanProvider>
             <Header />
             <main className="min-h-screen pt-16">{children}</main>
