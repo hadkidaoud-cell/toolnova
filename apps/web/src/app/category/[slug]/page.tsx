@@ -35,10 +35,10 @@ const CATEGORY_META: Record<CategorySlug, { icon: React.ElementType; color: stri
 
 const CATEGORY_ORDER: Record<CategorySlug, string[]> = {
   text: ["word-counter", "character-counter", "sentence-counter", "reading-time", "text-diff", "case-converter", "text-repeater", "palindrome-checker", "slug-generator", "ascii-art-converter", "password-strength-checker"],
-  image: ["image-compressor", "image-resizer", "image-converter", "image-cropper", "color-picker", "image-to-base64", "svg-compressor", "favicon-generator", "color-extractor"],
+  image: ["image-compressor", "image-resizer", "image-converter", "image-cropper", "color-picker", "image-to-base64", "svg-compressor", "favicon-generator", "color-extractor", "webp-converter", "thumbnail-maker"],
   developer: ["json-formatter", "html-formatter", "css-minifier", "javascript-formatter", "base64-encoder", "uuid-generator", "color-converter", "markdown-to-html", "hash-generator", "jwt-decoder", "url-encoder-decoder", "regex-tester", "qr-code-generator"],
   calculation: ["basic-calculator", "percentage-calculator", "bmi-calculator", "tip-calculator", "loan-calculator", "age-calculator", "date-difference", "countdown-timer"],
-  converter: ["unit-converter", "currency-converter", "temperature-converter", "file-converter", "timezone-converter", "number-base-converter"],
+  converter: ["unit-converter", "currency-converter", "temperature-converter", "file-converter", "timezone-converter", "number-base-converter", "format-converter"],
   generator: ["password-generator", "random-number", "lorem-ipsum-generator"],
   document: ["pdf-merger", "pdf-compressor", "image-to-pdf", "pdf-splitter", "resume-builder"],
 };
@@ -99,6 +99,9 @@ const TOOL_ICONS: Record<string, string> = {
   "url-encoder-decoder": "URL",
   "regex-tester": ".*",
   "number-base-converter": "0x",
+  "webp-converter": "W",
+  "format-converter": "⇄",
+  "thumbnail-maker": "🖼",
 };
 
 export default function CategoryPage() {

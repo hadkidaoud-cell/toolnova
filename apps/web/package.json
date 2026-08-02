@@ -36,6 +36,7 @@
     "bcryptjs": "^3.0.0",
     "class-variance-authority": "^0.7.1",
     "framer-motion": "^12.43.0",
+    "js-yaml": "4.1.0",
     "lucide-react": "^1.27.0",
     "next": "^15.1.0",
     "next-auth": "5.0.0-beta.32",
@@ -48,6 +49,7 @@
     "stripe": "^22.3.2"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

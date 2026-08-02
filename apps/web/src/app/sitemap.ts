@@ -22,6 +22,7 @@ const toolSlugs = [
   "lorem-ipsum-generator", "slug-generator", "ascii-art-converter",
   "password-strength-checker", "markdown-to-html", "hash-generator",
   "jwt-decoder", "url-encoder-decoder", "regex-tester", "number-base-converter",
+  "webp-converter", "format-converter", "thumbnail-maker",
 ];
 
 const categorySlugs = [

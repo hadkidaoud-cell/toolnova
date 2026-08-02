@@ -56,6 +56,9 @@ const tools = [
   { slug: "pdf-compressor", name: "PDF Compressor", category: "document-tools" },
   { slug: "image-to-pdf", name: "Image to PDF", category: "document-tools" },
   { slug: "pdf-splitter", name: "PDF Splitter", category: "document-tools" },
+  { slug: "webp-converter", name: "WebP Converter", category: "image-tools" },
+  { slug: "format-converter", name: "Data Format Converter", category: "converters" },
+  { slug: "thumbnail-maker", name: "Thumbnail Maker", category: "image-tools" },
 ];
 
 export async function GET(request: Request) {

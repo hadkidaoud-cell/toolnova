@@ -194,6 +194,9 @@ export interface Dictionary {
       "svg-compressor": { name: string; description: string; short: string };
       "timezone-converter": { name: string; description: string; short: string };
       "url-encoder-decoder": { name: string; description: string; short: string };
+      "webp-converter": { name: string; description: string; short: string };
+      "format-converter": { name: string; description: string; short: string };
+      "thumbnail-maker": { name: string; description: string; short: string };
     };
     common: {
       dropPdf: string;
@@ -395,6 +398,50 @@ export interface Dictionary {
       noImagesUploaded: string;
       downloadAll: string;
       freeBatchLimit: string;
+    };
+    webpConverter: {
+      modeToWebp: string;
+      modeFromWebp: string;
+      quality: string;
+      targetFormat: string;
+      convertAll: string;
+      processing: string;
+      noImagesUploaded: string;
+      downloadAll: string;
+      freeBatchLimit: string;
+      originalSize: string;
+      webpSize: string;
+      savedPercent: string;
+      lossyNote: string;
+      unsupportedNote: string;
+      validFormats: string;
+    };
+    thumbnailMaker: {
+      preset: string;
+      background: string;
+      background2: string;
+      useGradient: string;
+      accent: string;
+      title: string;
+      titlePlaceholder: string;
+      subtitle: string;
+      subtitlePlaceholder: string;
+      titleColor: string;
+      subtitleColor: string;
+      uploadLogo: string;
+      changeLogo: string;
+      removeLogo: string;
+      download: string;
+      canvasNote: string;
+      presets: {
+        youtube: string;
+        twitter: string;
+        facebook: string;
+        instagram: string;
+        story: string;
+        linkedin: string;
+        blog: string;
+      };
     };
     imageCropper: {
       aspectRatio: string;
@@ -622,6 +669,26 @@ export interface Dictionary {
       invalidJson: string;
       download: string;
       freeRowLimit: string;
+    };
+    formatConverter: {
+      from: string;
+      to: string;
+      inputPlaceholder: string;
+      convert: string;
+      download: string;
+      outputPlaceholder: string;
+      freeRowLimit: string;
+      emptyInput: string;
+      invalidJson: string;
+      invalidCsv: string;
+      invalidYaml: string;
+      invalidXml: string;
+      notTabular: string;
+      formatJson: string;
+      formatCsv: string;
+      formatTsv: string;
+      formatYaml: string;
+      formatXml: string;
     };
     htmlFormatter: {
       format: string;
