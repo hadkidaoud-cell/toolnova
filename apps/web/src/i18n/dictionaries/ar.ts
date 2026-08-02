@@ -243,6 +243,24 @@ const ar: Dictionary = {
         description: "نسّق وتحقق من بيانات JSON فوراً",
         category: "مطور",
       },
+      {
+        id: "webp-converter",
+        name: "محوّل WebP",
+        description: "حوّل الصور من وإلى صيغة WebP مع التحكم في الجودة",
+        category: "صورة",
+      },
+      {
+        id: "format-converter",
+        name: "محوّل صيغ البيانات",
+        description: "حوّل البيانات بين JSON وCSV وTSV وYAML وXML",
+        category: "محوّل",
+      },
+      {
+        id: "thumbnail-maker",
+        name: "منشئ الصور المصغرة",
+        description: "أنشئ صوراً مصغرة لليوتيوب والسوشيال والمدونات في ثوانٍ",
+        category: "صورة",
+      },
     ],
     categories: [
       {

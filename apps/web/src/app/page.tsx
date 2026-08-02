@@ -39,15 +39,18 @@ const FEATURED_TOOL_META: Record<string, { icon: React.ElementType; gradient: st
   "resume-builder": { icon: FileText, gradient: "from-blue-500 to-cyan-500" },
   "word-counter": { icon: Code, gradient: "from-amber-500 to-yellow-500" },
   "json-formatter": { icon: Code, gradient: "from-indigo-500 to-violet-500" },
+  "webp-converter": { icon: Image, gradient: "from-cyan-500 to-teal-500" },
+  "format-converter": { icon: RefreshCw, gradient: "from-fuchsia-500 to-purple-500" },
+  "thumbnail-maker": { icon: Image, gradient: "from-sky-500 to-blue-500" },
 };
 
 const CATEGORY_META: Record<string, { icon: React.ElementType; color: string; count: number }> = {
-  text: { icon: FileText, color: "from-blue-500 to-cyan-500", count: 24 },
-  image: { icon: Image, color: "from-green-500 to-emerald-500", count: 18 },
-  developer: { icon: Code, color: "from-indigo-500 to-violet-500", count: 32 },
-  calculation: { icon: Calculator, color: "from-amber-500 to-yellow-500", count: 15 },
-  converter: { icon: RefreshCw, color: "from-purple-500 to-pink-500", count: 21 },
-  generator: { icon: Sparkles, color: "from-red-500 to-orange-500", count: 12 },
+  text: { icon: FileText, color: "from-blue-500 to-cyan-500", count: 11 },
+  image: { icon: Image, color: "from-green-500 to-emerald-500", count: 11 },
+  developer: { icon: Code, color: "from-indigo-500 to-violet-500", count: 13 },
+  calculation: { icon: Calculator, color: "from-amber-500 to-yellow-500", count: 8 },
+  converter: { icon: RefreshCw, color: "from-purple-500 to-pink-500", count: 7 },
+  generator: { icon: Sparkles, color: "from-red-500 to-orange-500", count: 3 },
 };
 
 const STAT_META = [
@@ -194,7 +197,7 @@ function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="mt-10 flex items-center justify-center gap-4"
+            className="mt-10 flex flex-wrap items-center justify-center gap-4"
           >
             <Link href="#tools">
               <Button size="lg" className="h-12 px-8 text-base">
@@ -637,14 +640,14 @@ function NewsletterSection() {
           <p className="mx-auto mt-3 max-w-md text-brand-100">
             {dict.home.newsletterSubtitle}
           </p>
-          <form onSubmit={handleSubmit} className="mx-auto mt-8 flex max-w-md gap-3">
+          <form onSubmit={handleSubmit} className="mx-auto mt-8 flex max-w-md flex-wrap gap-3">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={dict.home.emailPlaceholder}
               required
-              className="h-12 flex-1 rounded-xl border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-brand-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+              className="h-12 min-w-0 flex-1 rounded-xl border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-brand-200 focus:outline-none focus:ring-2 focus:ring-white/50"
             />
             <Button
               type="submit"

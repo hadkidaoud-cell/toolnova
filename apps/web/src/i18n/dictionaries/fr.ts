@@ -242,8 +242,26 @@ const fr: Dictionary = {
       {
         id: "json-formatter",
         name: "Formateur JSON",
-        description: "Formatez et validez vos données JSON instantanément",
+        description: "Formatez et validez instantanément vos données JSON",
         category: "Développeur",
+      },
+      {
+        id: "webp-converter",
+        name: "Convertisseur WebP",
+        description: "Convertissez des images vers et depuis WebP avec contrôle de la qualité",
+        category: "Image",
+      },
+      {
+        id: "format-converter",
+        name: "Convertisseur de formats de données",
+        description: "Convertissez des données entre JSON, CSV, TSV, YAML et XML",
+        category: "Convertisseur",
+      },
+      {
+        id: "thumbnail-maker",
+        name: "Générateur de vignettes",
+        description: "Créez des vignettes YouTube, réseaux sociaux et blog en quelques secondes",
+        category: "Image",
       },
     ],
     categories: [

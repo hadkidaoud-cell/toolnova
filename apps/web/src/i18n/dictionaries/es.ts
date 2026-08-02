@@ -245,6 +245,24 @@ const es: Dictionary = {
         description: "Formatea y valida datos JSON al instante",
         category: "Desarrollador",
       },
+      {
+        id: "webp-converter",
+        name: "Conversor WebP",
+        description: "Convierte imágenes hacia y desde WebP con control de calidad",
+        category: "Imagen",
+      },
+      {
+        id: "format-converter",
+        name: "Conversor de formatos de datos",
+        description: "Convierte datos entre JSON, CSV, TSV, YAML y XML",
+        category: "Conversor",
+      },
+      {
+        id: "thumbnail-maker",
+        name: "Creador de miniaturas",
+        description: "Crea miniaturas para YouTube, redes sociales y blogs en segundos",
+        category: "Imagen",
+      },
     ],
     categories: [
       {
