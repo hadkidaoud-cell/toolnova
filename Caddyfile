@@ -1,0 +1,13 @@
+# Caddy auto-issues HTTPS certificates for the domains below.
+# IMPORTANT: replace these placeholder domains with your real ones,
+# and point their A records at this server before restarting Caddy.
+
+toolnova.com, www.toolnova.com {
+    encode gzip
+    reverse_proxy web:3000
+}
+
+admin.toolnova.com {
+    encode gzip
+    reverse_proxy admin:3000
+}

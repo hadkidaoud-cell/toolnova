@@ -1,38 +1,78 @@
-version: "3.9"
+# ToolNova deployment — web + admin + Caddy (HTTPS) + optional Litestream backup.
+# Usage:
+#   cp .env.example .env        # then fill in real values
+#   docker compose build
+#   docker compose up -d
+#   docker compose --profile backup up -d   # enable continuous DB backup
+
 services:
   web:
     build:
       context: .
       args:
         APP: web
-    ports:
-      - "3000:3000"
+        NEXT_PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://toolnova.com}
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-}
+        NEXT_PUBLIC_APP_NAME: ${PUBLIC_APP_NAME:-ToolNova}
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=file:./packages/database/dev.db
-    depends_on:
-      - api
+      NODE_ENV: production
+      AUTH_TRUST_HOST: "true"
+      DATABASE_URL: file:/data/dev.db
+      AUTH_SECRET: ${WEB_AUTH_SECRET:?WEB_AUTH_SECRET is required}
+      NEXT_PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://toolnova.com}
+      NEXT_PUBLIC_APP_NAME: ${PUBLIC_APP_NAME:-ToolNova}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRO_PRICE_ID: ${STRIPE_PRO_PRICE_ID:-}
+      STRIPE_ENTERPRISE_PRICE_ID: ${STRIPE_ENTERPRISE_PRICE_ID:-}
+    ports:
+      - "3100:3000"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
 
   admin:
     build:
       context: .
       args:
         APP: admin
-    ports:
-      - "3001:3001"
+        NEXT_PUBLIC_APP_URL: ${PUBLIC_APP_URL:-https://toolnova.com}
+        NEXT_PUBLIC_APP_NAME: ${PUBLIC_APP_NAME:-ToolNova}
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=file:./packages/database/dev.db
-    depends_on:
-      - api
+      NODE_ENV: production
+      AUTH_TRUST_HOST: "true"
+      DATABASE_URL: file:/data/dev.db
+      AUTH_SECRET: ${ADMIN_AUTH_SECRET:?ADMIN_AUTH_SECRET is required}
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
 
-  api:
-    build:
-      context: .
-      args:
-        APP: api
+  caddy:
+    image: caddy:2-alpine
     ports:
-      - "4000:4000"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+  litestream:
+    image: litestream/litestream:0.3
+    profiles: ["backup"]
+    command: replicate -config /etc/litestream.yml
+    volumes:
+      - ./data:/data
+      - ./litestream.yml:/etc/litestream.yml:ro
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=file:./packages/database/dev.db
+      LITESTREAM_ACCESS_KEY_ID: ${LITESTREAM_ACCESS_KEY_ID:-}
+      LITESTREAM_SECRET_ACCESS_KEY: ${LITESTREAM_SECRET_ACCESS_KEY:-}
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

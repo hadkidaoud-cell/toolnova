@@ -16,3 +16,4 @@ dev.log
 *.err
 packages/database/src/generated/
 apps/admin/.env
+/data

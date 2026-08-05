@@ -1,0 +1,18 @@
+# Litestream continuously replicates the SQLite database to S3/R2.
+# Values are filled from the `.env` file via environment expansion.
+# Enable with: docker compose --profile backup up -d
+#
+# Restore a backup:
+#   docker compose run --rm litestream restore -if-db-not-exists /data/dev.db
+#   docker compose restart web admin
+
+dbs:
+  - path: /data/dev.db
+    replicas:
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: toolnova/db
+        endpoint: ${LITESTREAM_ENDPOINT:-}
+        access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+        secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+        force-path-style: true
