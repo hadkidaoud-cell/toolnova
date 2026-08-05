@@ -1,27 +1,48 @@
-"use client";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getDbToolBySlug, getDbRelatedTools } from "@/lib/db-tools";
+import { DbToolView } from "@/components/tool/db-tool-page";
 
-import React from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useI18n } from "@/i18n";
-import { Button } from "@/components/ui/button";
+export const dynamic = "force-dynamic";
 
-export default function ToolFallbackPage() {
-  const params = useParams();
-  const { dict } = useI18n();
-  void params;
+interface ToolSlugPageProps {
+  params: Promise<{ slug: string }>;
+}
 
-  const t = dict.notFoundPage;
+export async function generateMetadata({ params }: ToolSlugPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const tool = await getDbToolBySlug(slug);
+  if (!tool) return { title: "Not Found" };
+  return {
+    title: tool.name,
+    description: tool.description,
+  };
+}
+
+export default async function ToolSlugPage({ params }: ToolSlugPageProps) {
+  const { slug } = await params;
+  const tool = await getDbToolBySlug(slug);
+
+  if (!tool) notFound();
+
+  const related = (await getDbRelatedTools(tool.categorySlug, tool.slug)) ?? [];
+
   return (
-    <main className="flex min-h-[60vh] flex-col items-center justify-center">
-      <div className="text-center">
-        <p className="text-8xl font-bold text-brand-600">404</p>
-        <h1 className="mt-4 text-3xl font-bold text-neutral-900 dark:text-white">{t.title}</h1>
-        <p className="mt-2 text-neutral-600 dark:text-neutral-400">{t.description}</p>
-        <Link href="/">
-          <Button className="mt-8">{t.backToHome}</Button>
-        </Link>
-      </div>
-    </main>
+    <DbToolView
+      tool={{
+        slug: tool.slug,
+        name: tool.name,
+        description: tool.description,
+        longDescription: tool.longDescription,
+        categorySlug: tool.categorySlug,
+        categoryName: tool.categoryName,
+        iconName: tool.iconName,
+        time: tool.time,
+        uses: tool.uses,
+        free: tool.free,
+        badges: tool.badges,
+      }}
+      related={related}
+    />
   );
 }

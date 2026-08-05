@@ -20,6 +20,7 @@ import { ToolCard } from "@/components/tool/tool-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useI18n } from "@/i18n";
 import { getCategoryMeta, getToolMeta } from "@/lib/tool-catalog";
+import { ToolViewTracker } from "@/components/tool/tool-view-tracker";
 
 export interface ToolLayoutProps {
   name: string;
@@ -331,6 +332,7 @@ export function ToolLayout({
   const { dict } = useI18n();
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-950">
+      <ToolViewTracker />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <Breadcrumb items={breadcrumbs} />
 

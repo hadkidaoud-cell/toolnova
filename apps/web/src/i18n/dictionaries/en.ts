@@ -12,6 +12,8 @@ const en: Dictionary = {
     badgePopular: "Popular",
     badgeRecommended: "Recommended",
     viewAll: "View all",
+    free: "Free",
+    uses: "uses",
   },
   header: {
     tools: "Tools",
@@ -21,6 +23,20 @@ const en: Dictionary = {
     searchPlaceholder: "Search tools...",
     logIn: "Log In",
     getStarted: "Get Started",
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
+  },
+  search: {
+    title: "Search tools",
+    placeholder: "Search for any tool...",
+    empty: "Type to start searching",
+    noResults: "No tools found",
+    popular: "Popular searches",
+    recent: "Recent searches",
+    clearRecent: "Clear",
+    navigate: "↑↓ to navigate",
+    open: "↵ to open",
+    close: "esc to close",
   },
   footer: {
     tagline:

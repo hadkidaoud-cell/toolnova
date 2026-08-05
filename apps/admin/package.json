@@ -9,6 +9,7 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf .next .turbo node_modules"
   },
   "dependencies": {
@@ -21,11 +22,13 @@
     "@toolnova/types": "workspace:*",
     "@toolnova/ui": "workspace:*",
     "@toolnova/utils": "workspace:*",
+    "lucide-react": "^1.27.0",
     "next": "^15.1.0",
     "next-auth": "5.0.0-beta.32",
     "prisma": "^6.6.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

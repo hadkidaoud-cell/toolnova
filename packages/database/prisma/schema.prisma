@@ -65,11 +65,16 @@ model Tool {
   icon            String?
   status          ToolStatus @default(DRAFT)
   views           Int        @default(0)
+  featured        Boolean    @default(false)
   metadata        String?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
   toolUsages ToolUsage[]
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([featured])
 }
 
 model Category {
@@ -88,34 +93,45 @@ model Category {
 model ToolUsage {
   id        Int      @id @default(autoincrement())
   toolId    Int
-  tool      Tool     @relation(fields: [toolId], references: [id])
+  tool      Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
   userId    Int?
-  user      User?    @relation(fields: [userId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   ip        String?
   userAgent String?
+  referer   String?
   metadata  String?
   createdAt DateTime @default(now())
+
+  @@index([toolId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Session {
   id        Int      @id @default(autoincrement())
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model ActivityLog {
   id         Int      @id @default(autoincrement())
   userId     Int?
-  user       User?    @relation(fields: [userId], references: [id])
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   action     String
   entityType String
   entityId   String?
   metadata   String?
   ip         String?
   createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entityType])
 }
 
 model Backup {

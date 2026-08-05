@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { getDbPublishedTools } from "@/lib/db-tools";
 
-const tools = [
+const fallbackTools = [
   { slug: "word-counter", name: "Word Counter", category: "text-tools" },
   { slug: "character-counter", name: "Character Counter", category: "text-tools" },
   { slug: "sentence-counter", name: "Sentence Counter", category: "text-tools" },
@@ -62,9 +63,16 @@ const tools = [
   { slug: "background-remover", name: "AI Background Remover", category: "image-tools" },
 ];
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const category = searchParams.get("category");
+
+  const dbTools = await getDbPublishedTools();
+  const tools = dbTools
+    ? dbTools.map((t) => ({ slug: t.slug, name: t.name, category: t.categorySlug }))
+    : fallbackTools;
 
   let result = tools;
   if (category) result = tools.filter((t) => t.category === category);

@@ -12,6 +12,8 @@ const fr: Dictionary = {
     badgePopular: "Populaire",
     badgeRecommended: "Recommandé",
     viewAll: "Tout voir",
+    free: "Gratuit",
+    uses: "utilisations",
   },
   header: {
     tools: "Outils",
@@ -21,6 +23,20 @@ const fr: Dictionary = {
     searchPlaceholder: "Rechercher des outils...",
     logIn: "Connexion",
     getStarted: "Commencer",
+    openMenu: "Ouvrir le menu",
+    closeMenu: "Fermer le menu",
+  },
+  search: {
+    title: "Rechercher des outils",
+    placeholder: "Rechercher un outil...",
+    empty: "Tapez pour commencer à chercher",
+    noResults: "Aucun outil trouvé",
+    popular: "Recherches populaires",
+    recent: "Recherches récentes",
+    clearRecent: "Effacer",
+    navigate: "↑↓ pour naviguer",
+    open: "↵ pour ouvrir",
+    close: "esc pour fermer",
   },
   footer: {
     tagline:

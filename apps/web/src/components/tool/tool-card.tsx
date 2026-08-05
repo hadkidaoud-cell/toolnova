@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowRight, Clock, Sparkles, Users } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/i18n";
 import {
   BADGE_PRIORITY,
+  formatUses,
   getCategoryMeta,
   getToolMeta,
   type ToolBadge,
@@ -49,7 +50,7 @@ export function ToolBadgePill({ badge }: { badge: ToolBadge }) {
         BADGE_STYLES[badge]
       )}
     >
-      {badge === "ai" && <Sparkles className="h-2.5 w-2.5" />}
+      {badge === "ai" && <Sparkles className="h-2.5 w-2.5" aria-hidden />}
       {label}
     </span>
   );
@@ -66,6 +67,7 @@ export function ToolCard({
   href,
 }: ToolCardProps) {
   const { dict } = useI18n();
+  const reduceMotion = useReducedMotion();
   const meta = getToolMeta(slug);
   const category = meta ? getCategoryMeta(meta.category) : null;
   const categoryName = meta ? dict.tools.categories[meta.category] : "";
@@ -74,15 +76,21 @@ export function ToolCard({
   const Icon = meta?.icon;
   const badges = BADGE_PRIORITY.filter((b) => meta?.badges.includes(b) ?? false).slice(
     0,
-    compact ? 1 : 2
+    compact ? 1 : 3
   );
   const linkHref = href ?? `/tools/${slug}`;
+
+  const timeLabel =
+    (meta?.time ?? 0) < 60
+      ? `~${meta?.time ?? 0} ${dict.tools.units.sec}`
+      : `~${Math.round((meta?.time ?? 0) / 60)} ${dict.tools.units.min}`;
+  const usesLabel = meta ? `${formatUses(meta.uses)} ${dict.ui.uses}` : "";
 
   const card = (
     <Link
       href={linkHref}
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-xl dark:border-neutral-800 dark:bg-neutral-900/70 dark:hover:border-brand-700/50",
+        "group relative flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-neutral-800 dark:bg-neutral-900/70 dark:hover:border-brand-700/50 dark:focus-visible:ring-offset-neutral-950",
         category ? category.glow : "hover:shadow-brand-500/10",
         compact && "p-4",
         className
@@ -90,6 +98,7 @@ export function ToolCard({
     >
       {category && (
         <div
+          aria-hidden
           className={cn(
             "pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b opacity-0 transition-opacity duration-300 group-hover:opacity-15",
             category.gradient
@@ -101,6 +110,7 @@ export function ToolCard({
         {Icon && category ? (
           <div className="relative">
             <div
+              aria-hidden
               className={cn(
                 "absolute -inset-1.5 rounded-2xl bg-gradient-to-br opacity-0 blur-lg transition-opacity duration-300 group-hover:opacity-100",
                 category.gradient
@@ -113,7 +123,7 @@ export function ToolCard({
                 compact && "h-10 w-10"
               )}
             >
-              <Icon className={cn("h-5 w-5", compact && "h-4 w-4")} />
+              <Icon className={cn("h-5 w-5", compact && "h-4 w-4")} aria-hidden />
             </div>
           </div>
         ) : (
@@ -141,6 +151,24 @@ export function ToolCard({
         </p>
       )}
 
+      {!compact && meta && (
+        <div className="mt-3 flex items-center gap-3 text-[11px] text-neutral-400 dark:text-neutral-500">
+          <span className="inline-flex items-center gap-1">
+            <Clock className="h-3 w-3" aria-hidden />
+            {timeLabel}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Users className="h-3 w-3" aria-hidden />
+            {usesLabel}
+          </span>
+          {meta.free && (
+            <span className="ms-auto inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-600 ring-1 ring-inset ring-emerald-500/20 dark:text-emerald-300">
+              {dict.ui.free}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="mt-auto flex items-center gap-2 pt-4">
         {categoryName && (
           <span
@@ -152,15 +180,15 @@ export function ToolCard({
             {categoryName}
           </span>
         )}
-        <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-neutral-400 opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-brand-600 group-hover:opacity-100 dark:text-neutral-500 dark:group-hover:text-brand-400 rtl:-translate-x-0.5 rtl:group-hover:-translate-x-0.5">
+        <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-neutral-400 opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-brand-600 group-hover:opacity-100 group-focus-visible:translate-x-0.5 group-focus-visible:text-brand-600 group-focus-visible:opacity-100 dark:text-neutral-500 dark:group-hover:text-brand-400 dark:group-focus-visible:text-brand-400 rtl:-translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:group-focus-visible:-translate-x-0.5">
           {dict.toolLayout.useTool}
-          <ArrowRight className="h-3 w-3 rtl:rotate-180" />
+          <ArrowRight className="h-3 w-3 rtl:rotate-180" aria-hidden />
         </span>
       </div>
     </Link>
   );
 
-  if (!animate) return card;
+  if (!animate || reduceMotion) return card;
 
   return (
     <motion.div

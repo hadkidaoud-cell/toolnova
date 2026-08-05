@@ -1,0 +1,165 @@
+import {
+  AlignStartVertical,
+  ArrowLeftRight,
+  ArrowRightLeft,
+  Binary,
+  Braces,
+  Cake,
+  Calculator,
+  CalendarDays,
+  CaseSensitive,
+  CaseUpper,
+  Code,
+  CodeXml,
+  Coins,
+  Crop,
+  Dices,
+  Diff,
+  Droplets,
+  FileArchive,
+  FileBox,
+  FileCode,
+  FileImage,
+  FileTerminal,
+  FileText,
+  FileType,
+  FileUser,
+  Files,
+  Globe,
+  Hash,
+  HeartPulse,
+  Hourglass,
+  IdCard,
+  Image,
+  ImageDown,
+  ImageUp,
+  Key,
+  KeyRound,
+  Landmark,
+  Link,
+  Link2,
+  List,
+  Merge,
+  MoveDiagonal,
+  Palette,
+  PanelsTopLeft,
+  Percent,
+  Pipette,
+  QrCode,
+  Regex,
+  Repeat2,
+  RefreshCw,
+  Ruler,
+  ShieldCheck,
+  Shrink,
+  Shuffle,
+  Sigma,
+  Sparkles,
+  Split,
+  SquareFunction,
+  Star,
+  Terminal,
+  TextQuote,
+  Thermometer,
+  Timer,
+  Type,
+  Wallet,
+  WandSparkles,
+  type LucideIcon,
+} from "lucide-react";
+
+export interface IconEntry {
+  name: string;
+  component: LucideIcon;
+}
+
+export const ICON_ENTRIES: IconEntry[] = [
+  { name: "type", component: Type },
+  { name: "case-sensitive", component: CaseSensitive },
+  { name: "case-upper", component: CaseUpper },
+  { name: "list", component: List },
+  { name: "timer", component: Timer },
+  { name: "diff", component: Diff },
+  { name: "repeat-2", component: Repeat2 },
+  { name: "arrow-left-right", component: ArrowLeftRight },
+  { name: "link", component: Link },
+  { name: "terminal", component: Terminal },
+  { name: "shield-check", component: ShieldCheck },
+  { name: "text-quote", component: TextQuote },
+  { name: "align-start-vertical", component: AlignStartVertical },
+
+  { name: "image", component: Image },
+  { name: "image-down", component: ImageDown },
+  { name: "image-up", component: ImageUp },
+  { name: "move-diagonal", component: MoveDiagonal },
+  { name: "shuffle", component: Shuffle },
+  { name: "crop", component: Crop },
+  { name: "pipette", component: Pipette },
+  { name: "binary", component: Binary },
+  { name: "file-code", component: FileCode },
+  { name: "star", component: Star },
+  { name: "droplets", component: Droplets },
+  { name: "panels-top-left", component: PanelsTopLeft },
+  { name: "wand-sparkles", component: WandSparkles },
+
+  { name: "braces", component: Braces },
+  { name: "code-xml", component: CodeXml },
+  { name: "code", component: Code },
+  { name: "shrink", component: Shrink },
+  { name: "file-terminal", component: FileTerminal },
+  { name: "file-box", component: FileBox },
+  { name: "id-card", component: IdCard },
+  { name: "palette", component: Palette },
+  { name: "file-type", component: FileType },
+  { name: "hash", component: Hash },
+  { name: "key-round", component: KeyRound },
+  { name: "link-2", component: Link2 },
+  { name: "regex", component: Regex },
+  { name: "qr-code", component: QrCode },
+
+  { name: "calculator", component: Calculator },
+  { name: "percent", component: Percent },
+  { name: "heart-pulse", component: HeartPulse },
+  { name: "wallet", component: Wallet },
+  { name: "landmark", component: Landmark },
+  { name: "cake", component: Cake },
+  { name: "calendar-days", component: CalendarDays },
+  { name: "hourglass", component: Hourglass },
+  { name: "square-function", component: SquareFunction },
+
+  { name: "ruler", component: Ruler },
+  { name: "coins", component: Coins },
+  { name: "thermometer", component: Thermometer },
+  { name: "files", component: Files },
+  { name: "globe", component: Globe },
+  { name: "sigma", component: Sigma },
+  { name: "refresh-cw", component: RefreshCw },
+  { name: "arrow-right-left", component: ArrowRightLeft },
+
+  { name: "key", component: Key },
+  { name: "dices", component: Dices },
+  { name: "sparkles", component: Sparkles },
+
+  { name: "merge", component: Merge },
+  { name: "file-archive", component: FileArchive },
+  { name: "file-image", component: FileImage },
+  { name: "split", component: Split },
+  { name: "file-user", component: FileUser },
+  { name: "file-text", component: FileText },
+];
+
+const ICON_MAP: Record<string, LucideIcon> = Object.fromEntries(
+  ICON_ENTRIES.map((entry) => [entry.name, entry.component])
+);
+
+export function getIcon(name: string | null | undefined): LucideIcon | undefined {
+  if (!name) return undefined;
+  return ICON_MAP[name.toLowerCase()] ?? ICON_MAP[name] ?? undefined;
+}
+
+export function iconNameToLabel(name: string): string {
+  return name
+    .split(/[-_]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}

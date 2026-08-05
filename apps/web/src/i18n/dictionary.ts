@@ -9,6 +9,8 @@ export interface Dictionary {
     badgePopular: string;
     badgeRecommended: string;
     viewAll: string;
+    free: string;
+    uses: string;
   };
   header: {
     tools: string;
@@ -18,6 +20,20 @@ export interface Dictionary {
     searchPlaceholder: string;
     logIn: string;
     getStarted: string;
+    openMenu: string;
+    closeMenu: string;
+  };
+  search: {
+    title: string;
+    placeholder: string;
+    empty: string;
+    noResults: string;
+    popular: string;
+    recent: string;
+    clearRecent: string;
+    navigate: string;
+    open: string;
+    close: string;
   };
   footer: {
     tagline: string;

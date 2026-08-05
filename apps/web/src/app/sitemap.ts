@@ -1,4 +1,5 @@
 import { MetadataRoute } from "next";
+import { getDbPublishedTools, getDbCategories } from "@/lib/db-tools";
 
 const BASE_URL = "https://toolnova.com";
 
@@ -7,7 +8,7 @@ const staticRoutes = [
   { url: "/login", lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.3 },
 ];
 
-const toolSlugs = [
+const fallbackToolSlugs = [
   "word-counter", "character-counter", "sentence-counter", "reading-time",
   "text-diff", "case-converter", "text-repeater", "palindrome-checker",
   "image-compressor", "image-resizer", "image-converter", "image-cropper",
@@ -25,11 +26,19 @@ const toolSlugs = [
   "webp-converter", "format-converter", "thumbnail-maker", "background-remover",
 ];
 
-const categorySlugs = [
+const fallbackCategorySlugs = [
   "text", "image", "developer", "calculation", "converter", "generator", "document",
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const dynamic = "force-dynamic";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [dbTools, dbCategories] = await Promise.all([getDbPublishedTools(), getDbCategories()]);
+
+  const toolSlugs = dbTools && dbTools.length > 0 ? dbTools.map((t) => t.slug) : fallbackToolSlugs;
+  const categorySlugs =
+    dbCategories && dbCategories.length > 0 ? dbCategories.map((c) => c.slug) : fallbackCategorySlugs;
+
   const toolRoutes = toolSlugs.map((slug) => ({
     url: `${BASE_URL}/tools/${slug}`,
     lastModified: new Date(),

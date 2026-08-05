@@ -8,10 +8,20 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { SearchDialogProvider, useSearchDialog } from "@/components/layout/search-dialog";
 import { useI18n } from "@/i18n";
 
 export function Header() {
+  return (
+    <SearchDialogProvider>
+      <HeaderInner />
+    </SearchDialogProvider>
+  );
+}
+
+function HeaderInner() {
   const { dict } = useI18n();
+  const { openSearch } = useSearchDialog();
   const [open, setOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
 
@@ -64,14 +74,18 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 rtl:left-auto rtl:right-3" />
-            <input
-              type="text"
-              placeholder={dict.header.searchPlaceholder}
-              className="h-9 w-48 rounded-lg border border-neutral-200 bg-neutral-50 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder:text-neutral-500 rtl:pl-3 rtl:pr-9 lg:w-56"
-            />
-          </div>
+          <button
+            onClick={openSearch}
+            aria-label={dict.search.title}
+            className="flex h-9 w-48 items-center gap-2.5 rounded-lg border border-neutral-200 bg-neutral-50 px-3 text-start text-sm text-neutral-400 transition-colors hover:border-brand-300 hover:bg-neutral-100 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-500 dark:hover:border-brand-700 dark:hover:bg-neutral-800/80 lg:w-56"
+          >
+            <Search className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="flex-1 truncate">{dict.header.searchPlaceholder}</span>
+            <kbd className="hidden shrink-0 items-center gap-0.5 rounded border border-neutral-200 px-1.5 py-0.5 text-[10px] font-medium text-neutral-400 dark:border-neutral-600 dark:text-neutral-500 lg:flex">
+              <span>Ctrl</span>
+              <span>K</span>
+            </kbd>
+          </button>
           <LanguageSwitcher />
           <ThemeToggle />
           <Link href="/login">
@@ -83,10 +97,20 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
+          <button
+            onClick={openSearch}
+            aria-label={dict.search.title}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+          >
+            <Search className="h-5 w-5" aria-hidden />
+          </button>
           <LanguageSwitcher />
           <ThemeToggle />
           <button
             onClick={() => setOpen(!open)}
+            aria-label={open ? dict.header.closeMenu : dict.header.openMenu}
+            aria-expanded={open}
+            aria-controls="mobile-menu"
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -97,6 +121,7 @@ export function Header() {
       <AnimatePresence>
         {open && (
           <motion.div
+            id="mobile-menu"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}

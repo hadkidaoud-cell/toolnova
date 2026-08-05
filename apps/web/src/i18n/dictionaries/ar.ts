@@ -12,6 +12,8 @@ const ar: Dictionary = {
     badgePopular: "شائع",
     badgeRecommended: "موصى به",
     viewAll: "عرض الكل",
+    free: "مجاني",
+    uses: "استخدام",
   },
   header: {
     tools: "الأدوات",
@@ -21,6 +23,20 @@ const ar: Dictionary = {
     searchPlaceholder: "ابحث عن الأدوات...",
     logIn: "تسجيل الدخول",
     getStarted: "ابدأ الآن",
+    openMenu: "افتح القائمة",
+    closeMenu: "أغلق القائمة",
+  },
+  search: {
+    title: "ابحث في الأدوات",
+    placeholder: "ابحث عن أي أداة...",
+    empty: "اكتب لبدء البحث",
+    noResults: "لا توجد أدوات مطابقة",
+    popular: "عمليات البحث الشائعة",
+    recent: "عمليات البحث الأخيرة",
+    clearRecent: "مسح",
+    navigate: "↑↓ للتنقل",
+    open: "↵ للفتح",
+    close: "esc للإغلاق",
   },
   footer: {
     tagline:

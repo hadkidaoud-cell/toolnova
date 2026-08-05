@@ -12,6 +12,8 @@ const pt: Dictionary = {
     badgePopular: "Popular",
     badgeRecommended: "Recomendado",
     viewAll: "Ver tudo",
+    free: "Grátis",
+    uses: "usos",
   },
   header: {
     tools: "Ferramentas",
@@ -21,6 +23,20 @@ const pt: Dictionary = {
     searchPlaceholder: "Pesquisar ferramentas...",
     logIn: "Entrar",
     getStarted: "Começar",
+    openMenu: "Abrir menu",
+    closeMenu: "Fechar menu",
+  },
+  search: {
+    title: "Pesquisar ferramentas",
+    placeholder: "Pesquisar qualquer ferramenta...",
+    empty: "Digite para começar a pesquisar",
+    noResults: "Nenhuma ferramenta encontrada",
+    popular: "Pesquisas populares",
+    recent: "Pesquisas recentes",
+    clearRecent: "Limpar",
+    navigate: "↑↓ para navegar",
+    open: "↵ para abrir",
+    close: "esc para fechar",
   },
   footer: {
     tagline:
